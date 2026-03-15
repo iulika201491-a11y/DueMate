@@ -7,85 +7,101 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkSession = async () => {
+    const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       if (data?.session) {
         router.push('/dashboard');
       }
       setLoading(false);
     };
-    checkSession();
+    checkAuth();
   }, [router]);
 
-  if (loading) 
-    return (
-      <div style={{ background: 'linear-gradient(135deg, #2563eb, #7c3aed)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: 'white', fontSize: '20px' }}>Loading...</div>
-      </div>
-    );
+  if (loading) return null;
 
   return (
-    <div style={{ background: 'linear-gradient(135deg, #2563eb, #7c3aed, #ec4899)', minHeight: '100vh', color: 'white', overflow: 'hidden' }}>
+    <div style={{ background: '#ffffff', color: '#1a1a1a', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       {/* Navigation */}
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 32px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>DueMate</h1>
-        <button
-          onClick={() => router.push('/auth')}
-          style={{ padding: '8px 24px', background: 'white', color: '#7c3aed', fontWeight: 'bold', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px' }}
-        >
-          Sign In
-        </button>
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 64px', borderBottom: '1px solid #f0f0f0' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: '700', letterSpacing: '-0.5px' }}>DueMate</h1>
+        <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+          <button onClick={() => router.push('/pricing')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: '#666' }}>Pricing</button>
+          <button onClick={() => router.push('/auth')} style={{ background: '#1a1a1a', color: 'white', padding: '10px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: '600' }}>Sign In</button>
+        </div>
       </nav>
 
       {/* Hero Section */}
-      <div style={{ textAlign: 'center', padding: '60px 32px', maxWidth: '800px', margin: '0 auto' }}>
-        <h2 style={{ fontSize: '48px', fontWeight: 'bold', marginBottom: '24px', lineHeight: '1.2' }}>Never Chase Late Payments Again</h2>
-        <p style={{ fontSize: '18px', marginBottom: '32px', opacity: 0.95 }}>
-          Track payment behavior, predict late payers, and get smart alerts. Built for freelancers who value their time.
-        </p>
-        <button
-          onClick={() => router.push('/auth')}
-          style={{ padding: '14px 32px', background: 'white', color: '#7c3aed', fontWeight: 'bold', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '16px', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)' }}
-        >
-          Get Started Free
-        </button>
-      </div>
+      <section style={{ padding: '120px 64px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '700px' }}>
+          <h2 style={{ fontSize: '56px', fontWeight: '700', lineHeight: '1.2', marginBottom: '24px', letterSpacing: '-1px' }}>
+            Stop chasing late payments
+          </h2>
+          <p style={{ fontSize: '20px', color: '#666', lineHeight: '1.6', marginBottom: '32px' }}>
+            DueMate helps freelancers track overdue invoices, send automated reminders, and get paid on time. No more spreadsheets. No more guessing.
+          </p>
+          <button
+            onClick={() => router.push('/auth')}
+            style={{ background: '#1a1a1a', color: 'white', padding: '16px 40px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: '600' }}
+          >
+            Start Free Trial
+          </button>
+        </div>
+      </section>
 
       {/* Stats Section */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px', maxWidth: '1000px', margin: '0 auto', padding: '0 32px 60px' }}>
-        <div style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '32px', textAlign: 'center', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-          <div style={{ fontSize: '40px', fontWeight: 'bold', marginBottom: '8px' }}>85%</div>
-          <p style={{ fontSize: '16px', opacity: 0.9 }}>of freelancers get paid late</p>
+      <section style={{ background: '#f8f8f8', padding: '80px 64px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '60px' }}>
+          <div>
+            <div style={{ fontSize: '48px', fontWeight: '700', color: '#1a1a1a', marginBottom: '12px' }}>85%</div>
+            <p style={{ fontSize: '16px', color: '#666' }}>of freelancers receive late payments</p>
+          </div>
+          <div>
+            <div style={{ fontSize: '48px', fontWeight: '700', color: '#1a1a1a', marginBottom: '12px' }}>$5k+</div>
+            <p style={{ fontSize: '16px', color: '#666' }}>average unpaid invoices per year</p>
+          </div>
+          <div>
+            <div style={{ fontSize: '48px', fontWeight: '700', color: '#1a1a1a', marginBottom: '12px' }}>8h/mo</div>
+            <p style={{ fontSize: '16px', color: '#666' }}>wasted chasing payments</p>
+          </div>
         </div>
-        <div style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '32px', textAlign: 'center', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-          <div style={{ fontSize: '40px', fontWeight: 'bold', marginBottom: '8px' }}>21%</div>
-          <p style={{ fontSize: '16px', opacity: 0.9 }}>pay late more than half the time</p>
-        </div>
-        <div style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '32px', textAlign: 'center', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-  <div style={{ fontSize: '40px', fontWeight: 'bold', marginBottom: '8px' }}>45 days</div>
-  <p style={{ fontSize: '16px', opacity: 0.9 }}>average payment delay</p>
-</div>
-
-      </div>
+      </section>
 
       {/* Features Section */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', maxWidth: '1000px', margin: '0 auto', padding: '0 32px 80px' }}>
-        <div style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '32px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
-          <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Payment Patterns</h3>
-          <p style={{ opacity: 0.9 }}>See which clients pay late and by how many days on average.</p>
+      <section style={{ padding: '80px 64px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <h3 style={{ fontSize: '40px', fontWeight: '700', marginBottom: '60px', textAlign: 'center' }}>Everything you need</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '40px' }}>
+            {[
+              { icon: '📊', title: 'Invoice Tracking', desc: 'Monitor all invoices in one place. Know exactly which ones are overdue.' },
+              { icon: '🔔', title: 'Smart Reminders', desc: 'Send automated payment reminders to clients with one click.' },
+              { icon: '📈', title: 'Analytics', desc: 'See payment trends, average collection time, and late payment rates.' }
+            ].map((feature, i) => (
+              <div key={i} style={{ padding: '32px', background: '#f8f8f8', borderRadius: '12px' }}>
+                <div style={{ fontSize: '40px', marginBottom: '16px' }}>{feature.icon}</div>
+                <h4 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '12px' }}>{feature.title}</h4>
+                <p style={{ fontSize: '16px', color: '#666', lineHeight: '1.6' }}>{feature.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '32px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔔</div>
-          <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Smart Alerts</h3>
-          <p style={{ opacity: 0.9 }}>Get notified when invoices become overdue so you never forget.</p>
-        </div>
-        <div style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '32px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📈</div>
-          <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Clear Dashboard</h3>
-          <p style={{ opacity: 0.9 }}>One simple view of all your invoices and payment health.</p>
-        </div>
-      </div>
+      </section>
+
+      {/* CTA Section */}
+      <section style={{ background: '#1a1a1a', color: 'white', padding: '80px 64px', textAlign: 'center' }}>
+        <h3 style={{ fontSize: '40px', fontWeight: '700', marginBottom: '24px' }}>Ready to stop chasing payments?</h3>
+        <p style={{ fontSize: '18px', color: '#ccc', marginBottom: '32px' }}>Try DueMate free for 7 days. No credit card required.</p>
+        <button
+          onClick={() => router.push('/auth')}
+          style={{ background: 'white', color: '#1a1a1a', padding: '16px 40px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: '600' }}
+        >
+          Start Free Trial
+        </button>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ borderTop: '1px solid #f0f0f0', padding: '48px 64px', textAlign: 'center', color: '#666', fontSize: '14px' }}>
+        <p>© 2026 DueMate. All rights reserved.</p>
+      </footer>
     </div>
   );
 }

@@ -20,6 +20,14 @@ interface Invoice {
   created_at: string;
 }
 
+interface Subscription {
+  status: string;
+  invoiceLimit: number;
+  clientLimit: number;
+  daysLeftInTrial: number;
+  trialEndsAt: string;
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -27,29 +35,25 @@ export default function Dashboard() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
-  const [showNewClient, setShowNewClient] = useState(false);
-  const [showNewInvoice, setShowNewInvoice] = useState(false);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [showClientForm, setShowClientForm] = useState(false);
+  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [newClient, setNewClient] = useState({ name: '', email: '' });
-  const [newInvoice, setNewInvoice] = useState({
-    client_id: '',
-    invoice_number: '',
-    amount: '',
-    due_date: '',
-  });
-  const [addingClient, setAddingClient] = useState(false);
-  const [addingInvoice, setAddingInvoice] = useState(false);
-  const [clientError, setClientError] = useState('');
-  const [invoiceError, setInvoiceError] = useState('');
+  const [newInvoice, setNewInvoice] = useState({ client_id: '', invoice_number: '', amount: '', due_date: '' });
+  const [clientLoading, setClientLoading] = useState(false);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data?.session) {
         router.push('/auth');
-      } else {
-        setUser(data.session.user);
-        await fetchData(data.session.user.id);
+        return;
       }
+      setUser(data.session.user);
+      await fetchData(data.session.user.id);
       setLoading(false);
     };
     checkAuth();
@@ -57,386 +61,482 @@ export default function Dashboard() {
 
   const fetchData = async (userId: string) => {
     try {
-      const { data: clientsData, error: clientsError } = await supabase
+      const subRes = await fetch('/api/check-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      const subData = await subRes.json();
+      setSubscription(subData);
+
+      const { data: clientsData } = await supabase
         .from('clients')
         .select('*')
         .eq('user_id', userId);
-      
-      const { data: invoicesData, error: invoicesError } = await supabase
+      setClients(clientsData || []);
+
+      const { data: invoicesData } = await supabase
         .from('invoices')
         .select('*')
-        .eq('user_id', userId);
-
-      if (clientsError) console.error('Clients error:', clientsError);
-      if (invoicesError) console.error('Invoices error:', invoicesError);
-
-      setClients(clientsData || []);
+        .eq('user_id', userId)
+        .order('due_date', { ascending: false });
       setInvoices(invoicesData || []);
-    } catch (error) {
-      console.error('Fetch error:', error);
+    } catch (err) {
+      console.error('Error fetching data:', err);
     }
   };
 
-  const addClient = async () => {
-    if (!newClient.name.trim()) {
-      setClientError('Please enter a client name');
+  const addClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!newClient.name) {
+      setError('Client name is required');
       return;
     }
 
-    setAddingClient(true);
-    setClientError('');
+    if (subscription && clients.length >= subscription.clientLimit) {
+      setError(`You've reached the limit of ${subscription.clientLimit} clients. Upgrade to Pro for unlimited.`);
+      return;
+    }
 
+    setClientLoading(true);
     try {
-      const { data, error } = await supabase.from('clients').insert([
-        { name: newClient.name, email: newClient.email, user_id: user.id },
-      ]).select();
+      const { error: err } = await supabase
+        .from('clients')
+        .insert([{ user_id: user.id, name: newClient.name, email: newClient.email }]);
 
-      if (error) {
-        setClientError(error.message);
-        console.error('Insert error:', error);
-      } else {
-        setNewClient({ name: '', email: '' });
-        setShowNewClient(false);
-        await fetchData(user.id);
-        setClientError('');
-      }
-    } catch (error: any) {
-      setClientError(error.message || 'Failed to add client');
-      console.error('Add client error:', error);
+      if (err) throw err;
+
+      setNewClient({ name: '', email: '' });
+      setShowClientForm(false);
+      setSuccess('Client added successfully');
+      await fetchData(user.id);
+    } catch (err: any) {
+      setError(err.message || 'Failed to add client');
     } finally {
-      setAddingClient(false);
+      setClientLoading(false);
     }
   };
 
-  const addInvoice = async () => {
+  const addInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
     if (!newInvoice.client_id || !newInvoice.invoice_number || !newInvoice.amount || !newInvoice.due_date) {
-      setInvoiceError('Please fill in all fields');
+      setError('All fields are required');
       return;
     }
 
-    setAddingInvoice(true);
-    setInvoiceError('');
+    if (subscription && invoices.length >= subscription.invoiceLimit) {
+      setError(`You've reached the limit of ${subscription.invoiceLimit} invoices. Upgrade to Pro for unlimited.`);
+      return;
+    }
 
+    setInvoiceLoading(true);
     try {
-      const { data, error } = await supabase.from('invoices').insert([
-        {
+      const { error: err } = await supabase
+        .from('invoices')
+        .insert([{
+          user_id: user.id,
           client_id: newInvoice.client_id,
           invoice_number: newInvoice.invoice_number,
           amount: parseFloat(newInvoice.amount),
           due_date: newInvoice.due_date,
-          user_id: user.id,
           status: 'pending',
-          paid_date: null,
-        },
-      ]).select();
+        }]);
 
-      if (error) {
-        setInvoiceError(error.message);
-        console.error('Insert error:', error);
-      } else {
-        setNewInvoice({ client_id: '', invoice_number: '', amount: '', due_date: '' });
-        setShowNewInvoice(false);
-        await fetchData(user.id);
-        setInvoiceError('');
-      }
-    } catch (error: any) {
-      setInvoiceError(error.message || 'Failed to add invoice');
-      console.error('Add invoice error:', error);
+      if (err) throw err;
+
+      setNewInvoice({ client_id: '', invoice_number: '', amount: '', due_date: '' });
+      setShowInvoiceForm(false);
+      setSuccess('Invoice added successfully');
+      await fetchData(user.id);
+    } catch (err: any) {
+      setError(err.message || 'Failed to add invoice');
     } finally {
-      setAddingInvoice(false);
+      setInvoiceLoading(false);
     }
   };
 
   const markInvoicePaid = async (invoiceId: string, dueDate: string) => {
-    const paidDate = new Date().toISOString().split('T')[0];
-    const status = new Date(paidDate) > new Date(dueDate) ? 'paid_late' : 'paid_on_time';
-
     try {
-      const { error } = await supabase
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const due = new Date(dueDate);
+      due.setHours(0, 0, 0, 0);
+      
+      const isPastDue = due < today;
+      const { error: err } = await supabase
         .from('invoices')
-        .update({ paid_date: paidDate, status })
+        .update({ status: isPastDue ? 'paid_late' : 'paid_on_time', paid_date: new Date().toISOString().split('T')[0] })
         .eq('id', invoiceId);
 
-      if (error) {
-        console.error('Update error:', error);
-      } else {
-        await fetchData(user.id);
-      }
-    } catch (error) {
-      console.error('Mark paid error:', error);
+      if (err) throw err;
+      setSuccess('Invoice marked as paid');
+      await fetchData(user.id);
+    } catch (err: any) {
+      setError(err.message || 'Failed to mark invoice as paid');
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
+  const sendAlertEmailToYou = async (invoice: Invoice, client: Client) => {
+    try {
+      const daysOverdue = Math.floor((new Date().getTime() - new Date(invoice.due_date).getTime()) / (1000 * 60 * 60 * 24));
+      const res = await fetch('/api/sendEmail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailType: 'alert',
+          recipientEmail: user.email,
+          clientName: client.name,
+          invoiceNumber: invoice.invoice_number,
+          daysOverdue: Math.max(0, daysOverdue),
+          amount: invoice.amount,
+          freelancerName: user.user_metadata?.name || 'Freelancer',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) setSuccess('Alert email sent to you');
+      else setError('Failed to send email');
+    } catch (err: any) {
+      setError('Error sending email: ' + err.message);
+    }
   };
 
-  if (loading)
+  const sendReminderEmailToClient = async (invoice: Invoice, client: Client) => {
+    if (!client.email) {
+      setError('Client email not found');
+      return;
+    }
+    try {
+      const daysOverdue = Math.floor((new Date().getTime() - new Date(invoice.due_date).getTime()) / (1000 * 60 * 60 * 24));
+      const res = await fetch('/api/sendEmail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailType: 'reminder',
+          recipientEmail: client.email,
+          clientName: client.name,
+          invoiceNumber: invoice.invoice_number,
+          daysOverdue: Math.max(0, daysOverdue),
+          amount: invoice.amount,
+          freelancerName: user.user_metadata?.name || 'Freelancer',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) setSuccess('Reminder email sent to client');
+      else setError('Failed to send email');
+    } catch (err: any) {
+      setError('Error sending email: ' + err.message);
+    }
+  };
+
+  if (loading) {
     return (
-      <div style={{ background: 'linear-gradient(135deg, #2563eb, #7c3aed)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: 'white', fontSize: '20px' }}>Loading...</div>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+        <div style={{ fontSize: '18px', color: '#666' }}>Loading...</div>
       </div>
     );
+  }
 
-  const totalOwed = invoices
-    .filter((inv) => inv.status === 'pending')
-    .reduce((sum, inv) => sum + inv.amount, 0);
-  const overdue = invoices.filter((inv) => inv.status === 'pending' && new Date(inv.due_date) < new Date());
-  const latePayments = invoices.filter((inv) => inv.status === 'paid_late');
+  // Fixed: Show ALL pending invoices, not just overdue ones
+  const allPendingInvoices = invoices.filter(inv => inv.status === 'pending');
+  const overdueInvoices = allPendingInvoices.filter(inv => new Date(inv.due_date) < new Date());
+  const totalOwed = allPendingInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+  const latePayments = invoices.filter(inv => inv.status === 'paid_late').length;
 
   return (
-    <div style={{ background: 'linear-gradient(135deg, #2563eb, #7c3aed, #ec4899)', minHeight: '100vh', color: 'white', padding: '32px' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: 'bold' }}>DueMate Dashboard</h1>
+    <div style={{ background: '#ffffff', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#1a1a1a' }}>
+      {/* Navigation */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 64px', borderBottom: '1px solid #f0f0f0' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '700' }}>Dashboard</h1>
+        <button
+          onClick={() => supabase.auth.signOut().then(() => router.push('/'))}
+          style={{ background: '#f0f0f0', color: '#1a1a1a', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}
+        >
+          Sign Out
+        </button>
+      </div>
+
+      {/* Trial Banner */}
+      {subscription?.status === 'trial' && (
+        <div style={{ background: '#f0f4ff', padding: '16px 64px', borderBottom: '1px solid #e0e8ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Free Trial ({subscription.daysLeftInTrial} days left)</p>
+            <p style={{ fontSize: '13px', color: '#1e40af', opacity: 0.8 }}>Upgrade to Pro for unlimited invoices and clients.</p>
+          </div>
           <button
-            onClick={handleSignOut}
-            style={{ padding: '8px 24px', background: '#dc2626', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+            onClick={() => router.push('/pricing')}
+            style={{ background: '#1e40af', color: 'white', padding: '8px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}
           >
-            Sign Out
+            Upgrade Now
           </button>
         </div>
+      )}
+
+      {/* Main Content */}
+      <div style={{ padding: '40px 64px', maxWidth: '1400px', margin: '0 auto' }}>
+        {/* Alerts */}
+        {error && (
+          <div style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#991b1b', padding: '12px 16px', borderRadius: '6px', marginBottom: '24px', fontSize: '14px' }}>
+            {error}
+          </div>
+        )}
+        {success && (
+          <div style={{ background: '#dcfce7', border: '1px solid #bbf7d0', color: '#166534', padding: '12px 16px', borderRadius: '6px', marginBottom: '24px', fontSize: '14px' }}>
+            {success}
+          </div>
+        )}
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '32px', borderBottom: '1px solid rgba(255, 255, 255, 0.2)', paddingBottom: '16px' }}>
-          {['overview', 'invoices', 'clients'].map((tab) => (
+        <div style={{ display: 'flex', gap: '40px', marginBottom: '40px', borderBottom: '1px solid #f0f0f0', paddingBottom: '16px' }}>
+          {['overview', 'invoices', 'clients'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               style={{
-                padding: '12px 24px',
-                fontWeight: 'bold',
                 background: 'none',
                 border: 'none',
-                color: 'white',
                 cursor: 'pointer',
-                opacity: activeTab === tab ? 1 : 0.6,
-                borderBottom: activeTab === tab ? '2px solid white' : 'none',
-                textTransform: 'capitalize',
+                fontSize: '16px',
+                fontWeight: activeTab === tab ? '700' : '500',
+                color: activeTab === tab ? '#1a1a1a' : '#999',
+                paddingBottom: '8px',
+                borderBottom: activeTab === tab ? '2px solid #1a1a1a' : 'none',
               }}
             >
-              {tab}
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
 
-        {/* Overview Tab */}
+        {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px', marginBottom: '40px' }}>
-              <div style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '24px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-                <div style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '8px' }}>${totalOwed.toFixed(2)}</div>
-                <p style={{ fontSize: '14px', opacity: 0.8 }}>Total Owed</p>
+            {/* Summary Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '40px' }}>
+              <div style={{ padding: '24px', background: '#f8f8f8', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+                <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase' }}>Total Owed</p>
+                <div style={{ fontSize: '32px', fontWeight: '700' }}>${totalOwed.toFixed(2)}</div>
               </div>
-              <div style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '24px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-                <div style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '8px' }}>{overdue.length}</div>
-                <p style={{ fontSize: '14px', opacity: 0.8 }}>Overdue Invoices</p>
+              <div style={{ padding: '24px', background: '#f8f8f8', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+                <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase' }}>Overdue Invoices</p>
+                <div style={{ fontSize: '32px', fontWeight: '700' }}>{overdueInvoices.length}</div>
               </div>
-              <div style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '24px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-                <div style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '8px' }}>{latePayments.length}</div>
-                <p style={{ fontSize: '14px', opacity: 0.8 }}>Late Payments</p>
+              <div style={{ padding: '24px', background: '#f8f8f8', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+                <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase' }}>Late Payments</p>
+                <div style={{ fontSize: '32px', fontWeight: '700' }}>{latePayments}</div>
               </div>
             </div>
 
-            <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '24px' }}>Overdue Invoices</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {overdue.length === 0 ? (
-                <p style={{ opacity: 0.7 }}>No overdue invoices! 🎉</p>
-              ) : (
-                overdue.map((inv) => {
-                  const client = clients.find((c) => c.id === inv.client_id);
-                  const daysOverdue = Math.floor((new Date().getTime() - new Date(inv.due_date).getTime()) / (1000 * 60 * 60 * 24));
-                  return (
-                    <div key={inv.id} style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-                      <div>
-                        <p style={{ fontSize: '16px', fontWeight: 'bold' }}>{client?.name || 'Unknown'}</p>
-                        <p style={{ fontSize: '14px', opacity: 0.7 }}>Invoice #{inv.invoice_number} · ${inv.amount.toFixed(2)}</p>
-                        <p style={{ fontSize: '14px', color: '#fca5a5' }}>{daysOverdue} days overdue</p>
+            {/* All Pending Invoices */}
+            {allPendingInvoices.length > 0 && (
+              <div>
+                <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Pending Invoices</h3>
+                <div style={{ background: '#f8f8f8', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+                  {allPendingInvoices.map((inv, idx) => {
+                    const client = clients.find(c => c.id === inv.client_id);
+                    const daysOverdue = Math.floor((new Date().getTime() - new Date(inv.due_date).getTime()) / (1000 * 60 * 60 * 24));
+                    const isOverdue = new Date(inv.due_date) < new Date();
+                    
+                    return (
+                      <div key={inv.id} style={{ padding: '16px', borderBottom: idx < allPendingInvoices.length - 1 ? '1px solid #e0e0e0' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <p style={{ fontWeight: '600', marginBottom: '4px' }}>Invoice #{inv.invoice_number}</p>
+                          <p style={{ fontSize: '14px', color: '#666' }}>
+                            {client?.name} • ${inv.amount.toFixed(2)} • Due {inv.due_date}
+                            {isOverdue && ` • ${daysOverdue} days overdue`}
+                          </p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => markInvoicePaid(inv.id, inv.due_date)}
+                            style={{ background: '#e8f5e9', color: '#2e7d32', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+                          >
+                            ✓ Mark Paid
+                          </button>
+                          <button
+                            onClick={() => sendAlertEmailToYou(inv, client!)}
+                            style={{ background: '#f3e5f5', color: '#6a1b9a', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+                          >
+                            🔔 Alert Me
+                          </button>
+                          <button
+                            onClick={() => sendReminderEmailToClient(inv, client!)}
+                            style={{ background: '#e3f2fd', color: '#1565c0', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+                          >
+                            📧 Remind Client
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => markInvoicePaid(inv.id, inv.due_date)}
-                        style={{ padding: '8px 16px', background: '#22c55e', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
-                      >
-                        Mark Paid
-                      </button>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Invoices Tab */}
+        {/* INVOICES TAB */}
         {activeTab === 'invoices' && (
           <div>
-            <button
-              onClick={() => setShowNewInvoice(!showNewInvoice)}
-              style={{ marginBottom: '24px', padding: '10px 20px', background: '#22c55e', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              {showNewInvoice ? '✕ Cancel' : '+ New Invoice'}
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: '700' }}>All Invoices</h3>
+              <button
+                onClick={() => setShowInvoiceForm(!showInvoiceForm)}
+                style={{ background: '#1a1a1a', color: 'white', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}
+              >
+                {showInvoiceForm ? '✕ Cancel' : '+ New Invoice'}
+              </button>
+            </div>
 
-            {showNewInvoice && (
-              <div style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '24px', marginBottom: '24px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-                <select
-                  value={newInvoice.client_id}
-                  onChange={(e) => setNewInvoice({ ...newInvoice, client_id: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', marginBottom: '12px', background: 'white', color: 'black', borderRadius: '8px', border: '1px solid #ddd', fontFamily: 'inherit' }}
-                >
-                  <option value="">Select Client</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  placeholder="Invoice Number"
-                  value={newInvoice.invoice_number}
-                  onChange={(e) => setNewInvoice({ ...newInvoice, invoice_number: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', marginBottom: '12px', background: 'white', color: 'black', borderRadius: '8px', border: '1px solid #ddd', fontFamily: 'inherit' }}
-                />
-                <input
-                  type="number"
-                  placeholder="Amount"
-                  value={newInvoice.amount}
-                  onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })}
-                  step="0.01"
-                  style={{ width: '100%', padding: '10px 12px', marginBottom: '12px', background: 'white', color: 'black', borderRadius: '8px', border: '1px solid #ddd', fontFamily: 'inherit' }}
-                />
-                <input
-                  type="date"
-                  value={newInvoice.due_date}
-                  onChange={(e) => setNewInvoice({ ...newInvoice, due_date: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', marginBottom: '12px', background: 'white', color: 'black', borderRadius: '8px', border: '1px solid #ddd', fontFamily: 'inherit' }}
-                />
-                {invoiceError && <p style={{ color: '#fca5a5', marginBottom: '12px' }}>{invoiceError}</p>}
+            {showInvoiceForm && (
+              <form onSubmit={addInvoice} style={{ background: '#f8f8f8', padding: '24px', borderRadius: '8px', marginBottom: '24px', border: '1px solid #e0e0e0' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '16px' }}>
+                  <select
+                    value={newInvoice.client_id}
+                    onChange={e => setNewInvoice({ ...newInvoice, client_id: e.target.value })}
+                    style={{ padding: '10px', border: '1px solid #d0d0d0', borderRadius: '6px', fontSize: '14px' }}
+                  >
+                    <option value="">Select client</option>
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Invoice number"
+                    value={newInvoice.invoice_number}
+                    onChange={e => setNewInvoice({ ...newInvoice, invoice_number: e.target.value })}
+                    style={{ padding: '10px', border: '1px solid #d0d0d0', borderRadius: '6px', fontSize: '14px' }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Amount"
+                    value={newInvoice.amount}
+                    onChange={e => setNewInvoice({ ...newInvoice, amount: e.target.value })}
+                    style={{ padding: '10px', border: '1px solid #d0d0d0', borderRadius: '6px', fontSize: '14px' }}
+                  />
+                  <input
+                    type="date"
+                    value={newInvoice.due_date}
+                    onChange={e => setNewInvoice({ ...newInvoice, due_date: e.target.value })}
+                    style={{ padding: '10px', border: '1px solid #d0d0d0', borderRadius: '6px', fontSize: '14px' }}
+                  />
+                </div>
                 <button
-                  onClick={addInvoice}
-                  disabled={addingInvoice}
-                  style={{ width: '100%', padding: '10px 12px', background: addingInvoice ? '#9ca3af' : '#3b82f6', color: 'white', borderRadius: '8px', border: 'none', cursor: addingInvoice ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}
+                  type="submit"
+                  disabled={invoiceLoading}
+                  style={{ background: '#1a1a1a', color: 'white', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: invoiceLoading ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '14px' }}
                 >
-                  {addingInvoice ? 'Adding...' : 'Add Invoice'}
+                  {invoiceLoading ? 'Adding...' : 'Add Invoice'}
                 </button>
-              </div>
+              </form>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {invoices.length === 0 ? (
-                <p style={{ opacity: 0.7 }}>No invoices yet. Create one to get started!</p>
-              ) : (
-                invoices.map((inv) => {
-                  const client = clients.find((c) => c.id === inv.client_id);
-                  const statusColor =
-                    inv.status === 'paid_on_time'
-                      ? '#22c55e'
-                      : inv.status === 'paid_late'
-                      ? '#f97316'
-                      : new Date(inv.due_date) < new Date()
-                      ? '#ef4444'
-                      : '#3b82f6';
-                  return (
-                    <div key={inv.id} style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-                      <div>
-                        <p style={{ fontSize: '16px', fontWeight: 'bold' }}>{client?.name || 'Unknown'}</p>
-                        <p style={{ fontSize: '14px', opacity: 0.7 }}>Invoice #{inv.invoice_number} · ${inv.amount.toFixed(2)}</p>
-                        <p style={{ fontSize: '12px', opacity: 0.6 }}>Due: {new Date(inv.due_date).toLocaleDateString()}</p>
-                      </div>
-                      <span style={{ background: statusColor, padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textTransform: 'capitalize' }}>
-                        {inv.status.replace('_', ' ')}
+            {invoices.length > 0 ? (
+              <div style={{ background: '#f8f8f8', borderRadius: '8px', border: '1px solid #e0e0e0', overflow: 'hidden' }}>
+                {invoices.map((inv, i) => (
+                  <div key={inv.id} style={{ padding: '16px', borderBottom: i < invoices.length - 1 ? '1px solid #e0e0e0' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <p style={{ fontWeight: '600', marginBottom: '4px' }}>Invoice #{inv.invoice_number}</p>
+                      <p style={{ fontSize: '14px', color: '#666' }}>{clients.find(c => c.id === inv.client_id)?.name} • ${inv.amount.toFixed(2)} • Due {inv.due_date}</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span style={{ background: inv.status === 'paid_on_time' ? '#dcfce7' : inv.status === 'paid_late' ? '#fed7aa' : '#fef3c7', color: inv.status === 'paid_on_time' ? '#166534' : inv.status === 'paid_late' ? '#9a3412' : '#92400e', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: '600' }}>
+                        {inv.status === 'pending' ? 'Pending' : inv.status === 'paid_on_time' ? 'Paid On Time' : 'Paid Late'}
                       </span>
                     </div>
-                  );
-                })
-              )}
-            </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ background: '#f8f8f8', padding: '40px', borderRadius: '8px', textAlign: 'center', color: '#999' }}>
+                No invoices yet
+              </div>
+            )}
           </div>
         )}
 
-        {/* Clients Tab */}
+        {/* CLIENTS TAB */}
         {activeTab === 'clients' && (
           <div>
-            <button
-              onClick={() => setShowNewClient(!showNewClient)}
-              style={{ marginBottom: '24px', padding: '10px 20px', background: '#22c55e', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              {showNewClient ? '✕ Cancel' : '+ New Client'}
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: '700' }}>Clients</h3>
+              <button
+                onClick={() => setShowClientForm(!showClientForm)}
+                style={{ background: '#1a1a1a', color: 'white', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}
+              >
+                {showClientForm ? '✕ Cancel' : '+ New Client'}
+              </button>
+            </div>
 
-            {showNewClient && (
-              <div style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '24px', marginBottom: '24px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-                <input
-                  type="text"
-                  placeholder="Client Name"
-                  value={newClient.name}
-                  onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', marginBottom: '12px', background: 'white', color: 'black', borderRadius: '8px', border: '1px solid #ddd', fontFamily: 'inherit' }}
-                />
-                <input
-                  type="email"
-                  placeholder="Email (optional)"
-                  value={newClient.email}
-                  onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', marginBottom: '12px', background: 'white', color: 'black', borderRadius: '8px', border: '1px solid #ddd', fontFamily: 'inherit' }}
-                />
-                {clientError && <p style={{ color: '#fca5a5', marginBottom: '12px' }}>{clientError}</p>}
+            {showClientForm && (
+              <form onSubmit={addClient} style={{ background: '#f8f8f8', padding: '24px', borderRadius: '8px', marginBottom: '24px', border: '1px solid #e0e0e0' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '16px' }}>
+                  <input
+                    type="text"
+                    placeholder="Client name"
+                    value={newClient.name}
+                    onChange={e => setNewClient({ ...newClient, name: e.target.value })}
+                    style={{ padding: '10px', border: '1px solid #d0d0d0', borderRadius: '6px', fontSize: '14px' }}
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email (optional)"
+                    value={newClient.email}
+                    onChange={e => setNewClient({ ...newClient, email: e.target.value })}
+                    style={{ padding: '10px', border: '1px solid #d0d0d0', borderRadius: '6px', fontSize: '14px' }}
+                  />
+                </div>
                 <button
-                  onClick={addClient}
-                  disabled={addingClient}
-                  style={{ width: '100%', padding: '10px 12px', background: addingClient ? '#9ca3af' : '#3b82f6', color: 'white', borderRadius: '8px', border: 'none', cursor: addingClient ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}
+                  type="submit"
+                  disabled={clientLoading}
+                  style={{ background: '#1a1a1a', color: 'white', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: clientLoading ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '14px' }}
                 >
-                  {addingClient ? 'Adding...' : 'Add Client'}
+                  {clientLoading ? 'Adding...' : 'Add Client'}
                 </button>
-              </div>
+              </form>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {clients.length === 0 ? (
-                <p style={{ opacity: 0.7 }}>No clients yet. Add one to get started!</p>
-              ) : (
-                clients.map((client) => {
-                  const clientInvoices = invoices.filter((inv) => inv.client_id === client.id);
-                  const lateCount = clientInvoices.filter((inv) => inv.status === 'paid_late').length;
-                  const avgDaysLate =
-                    lateCount > 0
-                      ? (
-                          clientInvoices
-                            .filter((inv) => inv.status === 'paid_late')
-                            .reduce((sum, inv) => {
-                              const daysLate = Math.floor(
-                                (new Date(inv.paid_date!).getTime() - new Date(inv.due_date).getTime()) / (1000 * 60 * 60 * 24)
-                              );
-                              return sum + daysLate;
-                            }, 0) / lateCount
-                        ).toFixed(1)
-                      : '0';
+            {clients.length > 0 ? (
+              <div style={{ background: '#f8f8f8', borderRadius: '8px', border: '1px solid #e0e0e0', overflow: 'hidden' }}>
+                {clients.map((client, i) => {
+                  const clientInvoices = invoices.filter(inv => inv.client_id === client.id);
+                  const latePaymentsForClient = clientInvoices.filter(inv => inv.status === 'paid_late').length;
+                  const avgDaysLate = latePaymentsForClient > 0
+                    ? Math.round(clientInvoices
+                        .filter(inv => inv.status === 'paid_late')
+                        .reduce((sum, inv) => sum + Math.floor((new Date(inv.paid_date!).getTime() - new Date(inv.due_date).getTime()) / (1000 * 60 * 60 * 24)), 0) / latePaymentsForClient)
+                    : 0;
+
                   return (
-                    <div key={client.id} style={{ background: 'rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '20px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-                      <p style={{ fontSize: '16px', fontWeight: 'bold' }}>{client.name}</p>
-                      <p style={{ fontSize: '14px', opacity: 0.7, marginBottom: '16px' }}>{client.email || 'No email'}</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', fontSize: '12px' }}>
+                    <div key={client.id} style={{ padding: '16px', borderBottom: i < clients.length - 1 ? '1px solid #e0e0e0' : 'none' }}>
+                      <p style={{ fontWeight: '600', marginBottom: '8px' }}>{client.name}</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', fontSize: '14px', color: '#666' }}>
                         <div>
-                          <p style={{ opacity: 0.6 }}>Total Invoices</p>
-                          <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{clientInvoices.length}</p>
+                          <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>TOTAL INVOICES</p>
+                          <p style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{clientInvoices.length}</p>
                         </div>
                         <div>
-                          <p style={{ opacity: 0.6 }}>Late Payments</p>
-                          <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{lateCount}</p>
+                          <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>LATE PAYMENTS</p>
+                          <p style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{latePaymentsForClient}</p>
                         </div>
                         <div>
-                          <p style={{ opacity: 0.6 }}>Avg Days Late</p>
-                          <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{avgDaysLate}</p>
+                          <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>AVG DAYS LATE</p>
+                          <p style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{avgDaysLate}</p>
                         </div>
                       </div>
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            ) : (
+              <div style={{ background: '#f8f8f8', padding: '40px', borderRadius: '8px', textAlign: 'center', color: '#999' }}>
+                No clients yet
+              </div>
+            )}
           </div>
         )}
       </div>
