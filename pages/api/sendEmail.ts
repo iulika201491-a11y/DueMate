@@ -51,12 +51,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       html: html,
     });
 
-    // Check if there was an error in the response
     if (response.error) {
       return res.status(500).json({ success: false, error: response.error.message });
     }
 
-    return res.status(200).json({ success: true, messageId: response.data?.id });
+    return res.status(200).json({ success: true, messageId: response.data?.id || 'sent' });
   } catch (error: any) {
     console.error('Email error:', error);
     return res.status(500).json({ success: false, error: error.message || 'Failed to send email' });
