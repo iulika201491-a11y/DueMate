@@ -38,6 +38,163 @@ interface ClientScore {
   avg_days_to_pay: number;
 }
 
+interface CashFlowForecast {
+  totalOwed: number;
+  projectedIncome: number;
+  projectedDate: string;
+  breakdown: Array<{ clientName: string; amount: number; projectedDate: string }>;
+  accuracy: string;
+}
+
+const paymentTermsTemplates = [
+  {
+    id: 'net-7',
+    name: 'Net 7',
+    days: 7,
+    icon: '📅',
+    content: `DueMate Payment Terms - Net 7
+
+Generated: ${new Date().toLocaleDateString()}
+
+PAYMENT TERMS
+Invoice is due within 7 days of receipt.
+
+LATE PAYMENT FEES
+A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
+
+Example: If an invoice for $1,000 is 30 days late, the client owes an additional $15 in late fees.
+
+PAYMENT METHOD
+Payment should be made via [your preferred method].
+
+DISPUTES
+Any invoice disputes must be reported within 5 days of receipt.
+
+CLOSING
+Failure to pay by the due date may result in suspension of services and legal action to recover the debt.`,
+  },
+  {
+    id: 'net-15',
+    name: 'Net 15',
+    days: 15,
+    icon: '📅',
+    content: `DueMate Payment Terms - Net 15
+
+Generated: ${new Date().toLocaleDateString()}
+
+PAYMENT TERMS
+Invoice is due within 15 days of receipt.
+
+LATE PAYMENT FEES
+A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
+
+PAYMENT METHOD
+Payment should be made via [your preferred method].
+
+DISPUTES
+Any invoice disputes must be reported within 5 days of receipt.
+
+CLOSING
+Failure to pay by the due date may result in suspension of services.`,
+  },
+  {
+    id: 'net-30',
+    name: 'Net 30',
+    days: 30,
+    icon: '📅',
+    content: `DueMate Payment Terms - Net 30
+
+Generated: ${new Date().toLocaleDateString()}
+
+PAYMENT TERMS
+Invoice is due within 30 days of receipt.
+
+LATE PAYMENT FEES
+A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
+
+PAYMENT METHOD
+Payment should be made via [your preferred method].
+
+DISPUTES
+Any invoice disputes must be reported within 5 days of receipt.
+
+CLOSING
+Failure to pay by the due date may result in suspension of services.`,
+  },
+  {
+    id: 'net-45',
+    name: 'Net 45',
+    days: 45,
+    icon: '📅',
+    content: `DueMate Payment Terms - Net 45
+
+Generated: ${new Date().toLocaleDateString()}
+
+PAYMENT TERMS
+Invoice is due within 45 days of receipt.
+
+LATE PAYMENT FEES
+A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
+
+PAYMENT METHOD
+Payment should be made via [your preferred method].
+
+DISPUTES
+Any invoice disputes must be reported within 5 days of receipt.
+
+CLOSING
+Failure to pay by the due date may result in suspension of services.`,
+  },
+  {
+    id: '50-50-milestone',
+    name: '50/50 Milestone',
+    days: 0,
+    icon: '🎯',
+    content: `DueMate Payment Terms - 50/50 Milestone
+
+Generated: ${new Date().toLocaleDateString()}
+
+PAYMENT TERMS
+Payment is split into two equal installments: 50% due upon project initiation, 50% due upon project completion.
+
+LATE PAYMENT FEES
+A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
+
+PAYMENT METHOD
+Payment should be made via [your preferred method].
+
+DISPUTES
+Any disputes must be reported within 5 days of the invoice date.
+
+CLOSING
+Failure to pay by the due date may result in suspension or cancellation of services.`,
+  },
+  {
+    id: 'deposit-balance',
+    name: 'Deposit + Balance',
+    days: 0,
+    icon: '💰',
+    content: `DueMate Payment Terms - Deposit + Balance
+
+Generated: ${new Date().toLocaleDateString()}
+
+PAYMENT TERMS
+A deposit of [X]% is due upon project start. The remaining balance is due upon completion.
+
+LATE PAYMENT FEES
+A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
+
+PAYMENT METHOD
+Payment should be made via [your preferred method].
+
+DISPUTES
+Any disputes must be reported within 5 days of the invoice date.
+
+CLOSING
+Failure to pay by the due date may result in suspension or cancellation of services.`,
+  },
+];
+
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -53,6 +210,9 @@ export default function Dashboard() {
   const [newInvoice, setNewInvoice] = useState({ client_id: '', invoice_number: '', amount: '', due_date: '' });
   const [loadingAction, setLoadingAction] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [cashFlowForecast, setCashFlowForecast] = useState<CashFlowForecast | null>(null);
+  const [lateFeeCalculator, setLateFeeCalculator] = useState({ amount: '', daysLate: '' });
+  const [lateFeeResult, setLateFeeResult] = useState<{ fee: number; total: number } | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -100,9 +260,27 @@ export default function Dashboard() {
         scoresMap[score.client_id] = score;
       });
       setClientScores(scoresMap);
+
+      await fetchCashFlowForecast(userId);
     } catch (error) {
       console.error('Fetch error:', error);
       setMessage({ type: 'error', text: 'Failed to load data' });
+    }
+  };
+
+  const fetchCashFlowForecast = async (userId: string) => {
+    try {
+      const response = await fetch('/api/forecast-cashflow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCashFlowForecast(data);
+      }
+    } catch (error) {
+      console.error('Forecast error:', error);
     }
   };
 
@@ -258,6 +436,36 @@ export default function Dashboard() {
     }
   };
 
+  const downloadPaymentTerms = (templateId: string) => {
+    const template = paymentTermsTemplates.find((t) => t.id === templateId);
+    if (!template) return;
+
+    const content = template.content;
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
+    element.setAttribute('download', `DueMate-Payment-Terms-${template.name.replace(' ', '-')}.txt`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    setMessage({ type: 'success', text: `Downloaded ${template.name} payment terms!` });
+    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+  };
+
+  const calculateLateFee = () => {
+    if (!lateFeeCalculator.amount || !lateFeeCalculator.daysLate) {
+      setMessage({ type: 'error', text: 'Please enter both amount and days late' });
+      return;
+    }
+    const amount = parseFloat(lateFeeCalculator.amount);
+    const daysLate = parseInt(lateFeeCalculator.daysLate);
+    const monthsLate = daysLate / 30;
+    const monthlyRate = 0.015; // 1.5% per month
+    const fee = amount * monthlyRate * monthsLate;
+    const total = amount + fee;
+    setLateFeeResult({ fee: parseFloat(fee.toFixed(2)), total: parseFloat(total.toFixed(2)) });
+  };
+
   const getRiskColor = (riskLevel: string) => {
     const colors: any = {
       low: '#10b981',
@@ -367,6 +575,130 @@ export default function Dashboard() {
                 <div style={{ fontSize: '13px', color: '#9ca3af', marginTop: '8px' }}>invoices paid after due date</div>
               </div>
             </div>
+
+            {/* Payment Terms Templates */}
+            <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px', marginBottom: '40px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, marginTop: 0, marginBottom: '20px' }}>📋 Payment Terms Templates</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                {paymentTermsTemplates.map((template) => (
+                  <button
+                    key={template.id}
+                    onClick={() => downloadPaymentTerms(template.id)}
+                    style={{
+                      background: '#f3f4f6',
+                      border: '1px solid #d1d5db',
+                      padding: '12px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#1f2937',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#e5e7eb';
+                      e.currentTarget.style.borderColor = '#9ca3af';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#f3f4f6';
+                      e.currentTarget.style.borderColor = '#d1d5db';
+                    }}
+                  >
+                    {template.icon} {template.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Late Fee Calculator */}
+            <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px', marginBottom: '40px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, marginTop: 0, marginBottom: '20px' }}>💰 Late Fee Calculator</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                <input
+                  type="number"
+                  placeholder="Invoice Amount ($)"
+                  value={lateFeeCalculator.amount}
+                  onChange={(e) => setLateFeeCalculator({ ...lateFeeCalculator, amount: e.target.value })}
+                  style={{ padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                />
+                <input
+                  type="number"
+                  placeholder="Days Late"
+                  value={lateFeeCalculator.daysLate}
+                  onChange={(e) => setLateFeeCalculator({ ...lateFeeCalculator, daysLate: e.target.value })}
+                  style={{ padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                />
+                <button
+                  onClick={calculateLateFee}
+                  style={{
+                    background: '#3b82f6',
+                    color: 'white',
+                    padding: '10px 16px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                  }}
+                >
+                  Calculate
+                </button>
+              </div>
+              {lateFeeResult && (
+                <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '16px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '14px', color: '#166534', marginBottom: '8px' }}>
+                    Late Fee (1.5%/month): <strong>${lateFeeResult.fee.toFixed(2)}</strong>
+                  </div>
+                  <div style={{ fontSize: '16px', color: '#166534', fontWeight: 700 }}>
+                    Total Due: <strong>${lateFeeResult.total.toFixed(2)}</strong>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Cash Flow Forecast (Plus only) */}
+            {subscription?.plan === 'plus' && cashFlowForecast && (
+              <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px', marginBottom: '40px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 700, marginTop: 0, marginBottom: '20px' }}>📈 Cash Flow Forecast</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: 600, marginBottom: '8px' }}>TOTAL OWED</div>
+                    <div style={{ fontSize: '28px', fontWeight: 700, color: '#1f2937' }}>${cashFlowForecast.totalOwed.toFixed(2)}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: 600, marginBottom: '8px' }}>PROJECTED INCOME</div>
+                    <div style={{ fontSize: '28px', fontWeight: 700, color: '#10b981' }}>${cashFlowForecast.projectedIncome.toFixed(2)}</div>
+                    <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>by {cashFlowForecast.projectedDate}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: 600, marginBottom: '8px' }}>ACCURACY</div>
+                    <div
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 700,
+                        color: cashFlowForecast.accuracy === 'High' ? '#10b981' : cashFlowForecast.accuracy === 'Medium' ? '#f59e0b' : '#ef4444',
+                      }}
+                    >
+                      {cashFlowForecast.accuracy}
+                    </div>
+                  </div>
+                </div>
+                {cashFlowForecast.breakdown.length > 0 && (
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>Payment Schedule</h4>
+                    {cashFlowForecast.breakdown.slice(0, 5).map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f3f4f6', fontSize: '14px' }}>
+                        <span>{item.clientName}</span>
+                        <div>
+                          <span style={{ fontWeight: 600, marginRight: '12px' }}>${item.amount.toFixed(2)}</span>
+                          <span style={{ color: '#6b7280' }}>{item.projectedDate}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Pending Invoices */}
             {allPendingInvoices.length > 0 && (
