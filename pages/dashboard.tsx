@@ -52,146 +52,42 @@ const paymentTermsTemplates = [
     name: 'Net 7',
     days: 7,
     icon: '📅',
-    content: `DueMate Payment Terms - Net 7
-
-Generated: ${new Date().toLocaleDateString()}
-
-PAYMENT TERMS
-Invoice is due within 7 days of receipt.
-
-LATE PAYMENT FEES
-A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
-
-Example: If an invoice for $1,000 is 30 days late, the client owes an additional $15 in late fees.
-
-PAYMENT METHOD
-Payment should be made via [your preferred method].
-
-DISPUTES
-Any invoice disputes must be reported within 5 days of receipt.
-
-CLOSING
-Failure to pay by the due date may result in suspension of services and legal action to recover the debt.`,
+    content: `DueMate Payment Terms - Net 7\n\nGenerated: ${new Date().toLocaleDateString()}\n\nPAYMENT TERMS\nInvoice is due within 7 days of receipt.\n\nLATE PAYMENT FEES\nA late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.\n\nExample: If an invoice for $1,000 is 30 days late, the client owes an additional $15 in late fees.\n\nPAYMENT METHOD\nPayment should be made via [your preferred method].\n\nDISPUTES\nAny invoice disputes must be reported within 5 days of receipt.\n\nCLOSING\nFailure to pay by the due date may result in suspension of services and legal action to recover the debt.`,
   },
   {
     id: 'net-15',
     name: 'Net 15',
     days: 15,
     icon: '📅',
-    content: `DueMate Payment Terms - Net 15
-
-Generated: ${new Date().toLocaleDateString()}
-
-PAYMENT TERMS
-Invoice is due within 15 days of receipt.
-
-LATE PAYMENT FEES
-A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
-
-PAYMENT METHOD
-Payment should be made via [your preferred method].
-
-DISPUTES
-Any invoice disputes must be reported within 5 days of receipt.
-
-CLOSING
-Failure to pay by the due date may result in suspension of services.`,
+    content: `DueMate Payment Terms - Net 15\n\nGenerated: ${new Date().toLocaleDateString()}\n\nPAYMENT TERMS\nInvoice is due within 15 days of receipt.\n\nLATE PAYMENT FEES\nA late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.\n\nPAYMENT METHOD\nPayment should be made via [your preferred method].\n\nDISPUTES\nAny invoice disputes must be reported within 5 days of receipt.\n\nCLOSING\nFailure to pay by the due date may result in suspension of services.`,
   },
   {
     id: 'net-30',
     name: 'Net 30',
     days: 30,
     icon: '📅',
-    content: `DueMate Payment Terms - Net 30
-
-Generated: ${new Date().toLocaleDateString()}
-
-PAYMENT TERMS
-Invoice is due within 30 days of receipt.
-
-LATE PAYMENT FEES
-A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
-
-PAYMENT METHOD
-Payment should be made via [your preferred method].
-
-DISPUTES
-Any invoice disputes must be reported within 5 days of receipt.
-
-CLOSING
-Failure to pay by the due date may result in suspension of services.`,
+    content: `DueMate Payment Terms - Net 30\n\nGenerated: ${new Date().toLocaleDateString()}\n\nPAYMENT TERMS\nInvoice is due within 30 days of receipt.\n\nLATE PAYMENT FEES\nA late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.\n\nPAYMENT METHOD\nPayment should be made via [your preferred method].\n\nDISPUTES\nAny invoice disputes must be reported within 5 days of receipt.\n\nCLOSING\nFailure to pay by the due date may result in suspension of services.`,
   },
   {
     id: 'net-45',
     name: 'Net 45',
     days: 45,
     icon: '📅',
-    content: `DueMate Payment Terms - Net 45
-
-Generated: ${new Date().toLocaleDateString()}
-
-PAYMENT TERMS
-Invoice is due within 45 days of receipt.
-
-LATE PAYMENT FEES
-A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
-
-PAYMENT METHOD
-Payment should be made via [your preferred method].
-
-DISPUTES
-Any invoice disputes must be reported within 5 days of receipt.
-
-CLOSING
-Failure to pay by the due date may result in suspension of services.`,
+    content: `DueMate Payment Terms - Net 45\n\nGenerated: ${new Date().toLocaleDateString()}\n\nPAYMENT TERMS\nInvoice is due within 45 days of receipt.\n\nLATE PAYMENT FEES\nA late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.\n\nPAYMENT METHOD\nPayment should be made via [your preferred method].\n\nDISPUTES\nAny invoice disputes must be reported within 5 days of receipt.\n\nCLOSING\nFailure to pay by the due date may result in suspension of services.`,
   },
   {
     id: '50-50-milestone',
     name: '50/50 Milestone',
     days: 0,
     icon: '🎯',
-    content: `DueMate Payment Terms - 50/50 Milestone
-
-Generated: ${new Date().toLocaleDateString()}
-
-PAYMENT TERMS
-Payment is split into two equal installments: 50% due upon project initiation, 50% due upon project completion.
-
-LATE PAYMENT FEES
-A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
-
-PAYMENT METHOD
-Payment should be made via [your preferred method].
-
-DISPUTES
-Any disputes must be reported within 5 days of the invoice date.
-
-CLOSING
-Failure to pay by the due date may result in suspension or cancellation of services.`,
+    content: `DueMate Payment Terms - 50/50 Milestone\n\nGenerated: ${new Date().toLocaleDateString()}\n\nPAYMENT TERMS\nPayment is split into two equal installments: 50% due upon project initiation, 50% due upon project completion.\n\nLATE PAYMENT FEES\nA late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.\n\nPAYMENT METHOD\nPayment should be made via [your preferred method].\n\nDISPUTES\nAny disputes must be reported within 5 days of the invoice date.\n\nCLOSING\nFailure to pay by the due date may result in suspension or cancellation of services.`,
   },
   {
     id: 'deposit-balance',
     name: 'Deposit + Balance',
     days: 0,
     icon: '💰',
-    content: `DueMate Payment Terms - Deposit + Balance
-
-Generated: ${new Date().toLocaleDateString()}
-
-PAYMENT TERMS
-A deposit of [X]% is due upon project start. The remaining balance is due upon completion.
-
-LATE PAYMENT FEES
-A late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.
-
-PAYMENT METHOD
-Payment should be made via [your preferred method].
-
-DISPUTES
-Any disputes must be reported within 5 days of the invoice date.
-
-CLOSING
-Failure to pay by the due date may result in suspension or cancellation of services.`,
+    content: `DueMate Payment Terms - Deposit + Balance\n\nGenerated: ${new Date().toLocaleDateString()}\n\nPAYMENT TERMS\nA deposit of [X]% is due upon project start. The remaining balance is due upon completion.\n\nLATE PAYMENT FEES\nA late payment fee of 1.5% per month (18% annually) will be applied to any outstanding balance not paid by the due date.\n\nPAYMENT METHOD\nPayment should be made via [your preferred method].\n\nDISPUTES\nAny disputes must be reported within 5 days of the invoice date.\n\nCLOSING\nFailure to pay by the due date may result in suspension or cancellation of services.`,
   },
 ];
 
@@ -291,6 +187,13 @@ export default function Dashboard() {
       setMessage({ type: 'error', text: 'Name and email are required' });
       return;
     }
+
+    // Check free trial limit
+    if (subscription?.status === 'trial' && !editingClient && clients.length >= 2) {
+      setMessage({ type: 'error', text: 'Free trial limited to 2 clients. Upgrade to add more.' });
+      return;
+    }
+
     setLoadingAction(true);
     try {
       if (editingClient) {
@@ -353,9 +256,16 @@ export default function Dashboard() {
       setMessage({ type: 'error', text: 'All fields are required' });
       return;
     }
+
+    // Check free trial limit
+    if (subscription?.status === 'trial' && invoices.length >= 3) {
+      setMessage({ type: 'error', text: 'Free trial limited to 3 invoices. Upgrade to add more.' });
+      return;
+    }
+
     setLoadingAction(true);
     try {
-      const { error } = await supabase
+      const { data: invoiceData, error: invoiceError } = await supabase
         .from('invoices')
         .insert([
           {
@@ -366,11 +276,29 @@ export default function Dashboard() {
             due_date: newInvoice.due_date,
             status: 'pending',
           },
-        ]);
-      if (error) throw error;
+        ])
+        .select();
+
+      if (invoiceError) throw invoiceError;
+
+      // Schedule automated reminders (day 3 and day 7)
+      if (invoiceData && invoiceData.length > 0) {
+        const invoiceId = invoiceData[0].id;
+        await fetch('/api/schedule-reminders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            invoiceId: invoiceId,
+            clientId: newInvoice.client_id,
+            dueDate: newInvoice.due_date,
+          }),
+        });
+      }
+
       setNewInvoice({ client_id: '', invoice_number: '', amount: '', due_date: '' });
       setShowNewInvoice(false);
-      setMessage({ type: 'success', text: 'Invoice created!' });
+      setMessage({ type: 'success', text: 'Invoice created! Automated reminders scheduled for day 3 & 7.' });
       await fetchData(user.id);
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     } catch (error: any) {
@@ -522,6 +450,16 @@ export default function Dashboard() {
     return colors[riskLevel] || '#6b7280';
   };
 
+  const getRiskBadgeText = (riskLevel: string) => {
+    const texts: any = {
+      low: '✓ Reliable',
+      medium: '⚠ Medium Risk',
+      high: '✗ High Risk',
+      critical: '✗✗ Critical',
+    };
+    return texts[riskLevel] || 'Unknown';
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -540,6 +478,24 @@ export default function Dashboard() {
     return due < today;
   });
   const latePayments = invoices.filter((i) => i.status === 'paid_late').length;
+
+  // Get top 5 clients by reliability (for prominent display)
+  const topClientsByReliability = Object.entries(clientScores)
+    .sort(([, a], [, b]) => b.payment_reliability_score - a.payment_reliability_score)
+    .slice(0, 5)
+    .map(([clientId, score]) => ({
+      clientId,
+      ...score,
+      client: clients.find((c) => c.id === clientId),
+    }));
+
+  const riskClients = Object.entries(clientScores)
+    .filter(([, score]) => score.risk_level === 'high' || score.risk_level === 'critical')
+    .map(([clientId, score]) => ({
+      clientId,
+      ...score,
+      client: clients.find((c) => c.id === clientId),
+    }));
 
   return (
     <div style={{ background: '#f9fafb', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#1f2937' }}>
@@ -561,7 +517,7 @@ export default function Dashboard() {
       {subscription?.status === 'trial' && (
         <div style={{ background: '#dbeafe', borderBottom: '1px solid #bfdbfe', padding: '16px 40px', textAlign: 'center' }}>
           <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#1e40af', fontWeight: 600 }}>
-            🎉 You're on a free 7-day trial. Upgrade to Pro ($12/mo) or Plus ($29/mo) to unlock all features.
+            🎉 You're on a free 7-day trial (limited to 2 clients, 3 invoices). Upgrade to Pro ($12/mo) or Plus ($29/mo) for unlimited access.
           </p>
           <button onClick={() => router.push('/pricing')} style={{ background: '#1e40af', color: 'white', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
             Upgrade Now
@@ -620,6 +576,59 @@ export default function Dashboard() {
                 <div style={{ fontSize: '32px', fontWeight: 700, color: '#f59e0b' }}>{latePayments}</div>
                 <div style={{ fontSize: '13px', color: '#9ca3af', marginTop: '8px' }}>invoices paid after due date</div>
               </div>
+            </div>
+
+            {/* CLIENT RELIABILITY SCORE - PROMINENT */}
+            <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px', marginBottom: '40px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, marginTop: 0, marginBottom: '20px' }}>🎯 Client Reliability Scores</h3>
+              {topClientsByReliability.length > 0 ? (
+                <div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                    {topClientsByReliability.map((item) => (
+                      <div key={item.clientId} style={{ padding: '16px', background: '#f9fafb', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <div style={{ fontSize: '15px', fontWeight: 700, color: '#1f2937' }}>{item.client?.name || 'Unknown'}</div>
+                          <div
+                            style={{
+                              background: getRiskColor(item.risk_level),
+                              color: 'white',
+                              padding: '6px 12px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {getRiskBadgeText(item.risk_level)}
+                          </div>
+                        </div>
+                        <div style={{ fontSize: '24px', fontWeight: 700, color: getRiskColor(item.risk_level), marginBottom: '8px' }}>
+                          {item.payment_reliability_score.toFixed(0)}/100
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+                          Avg days to pay: <strong>{item.avg_days_to_pay.toFixed(0)} days</strong>
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                          {item.paid_invoices} of {item.total_invoices} paid on time
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {riskClients.length > 0 && (
+                    <div style={{ marginTop: '20px', padding: '16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#991b1b', marginTop: 0, marginBottom: '8px' }}>⚠️ High Risk Clients</h4>
+                      {riskClients.map((item) => (
+                        <div key={item.clientId} style={{ fontSize: '13px', color: '#7c2d12', marginBottom: '4px' }}>
+                          • {item.client?.name} ({getRiskBadgeText(item.risk_level)})
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ fontSize: '14px', color: '#6b7280', textAlign: 'center', padding: '20px' }}>
+                  Create invoices to see client reliability scores
+                </div>
+              )}
             </div>
 
             {/* Payment Terms Templates */}
@@ -746,7 +755,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Pending Invoices */}
+            {/* Pending Invoices with badges */}
             {allPendingInvoices.length > 0 && (
               <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px' }}>
                 <h3 style={{ fontSize: '18px', fontWeight: 700, marginTop: 0, marginBottom: '20px' }}>Pending Invoices</h3>
@@ -759,17 +768,23 @@ export default function Dashboard() {
                     today.setHours(0, 0, 0, 0);
                     const isOverdue = due < today;
                     const daysOverdue = isOverdue ? Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                    const score = clientScores[invoice.client_id];
 
                     return (
                       <div key={invoice.id} style={{ padding: '16px', background: '#f9fafb', borderRadius: '6px', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '15px', fontWeight: 600, color: '#1f2937', marginBottom: '4px' }}>
+                          <div style={{ fontSize: '15px', fontWeight: 600, color: '#1f2937', marginBottom: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                             Invoice #{invoice.invoice_number}
+                            {isOverdue && <span style={{ background: '#fecaca', color: '#7c2d12', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 600 }}>⚠️ {daysOverdue}d overdue</span>}
                           </div>
                           <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>
                             {client?.name || 'Unknown Client'} • ${invoice.amount.toFixed(2)} • Due {invoice.due_date}
                           </div>
-                          {isOverdue && <div style={{ fontSize: '13px', color: '#ef4444', fontWeight: 600 }}>⚠️ {daysOverdue} days overdue</div>}
+                          {score && (
+                            <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                              Client reliability: <span style={{ color: getRiskColor(score.risk_level), fontWeight: 600 }}>{score.payment_reliability_score.toFixed(0)}/100</span>
+                            </div>
+                          )}
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <button
@@ -980,9 +995,14 @@ export default function Dashboard() {
                           <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px', marginBottom: '8px' }}>
                             {client.email} • {clientInvoices.length} invoices
                           </div>
-                          <div style={{ fontSize: '13px', color: '#9ca3af' }}>
+                          <div style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '8px' }}>
                             ${paidAmount.toFixed(2)} paid of ${totalAmount.toFixed(2)}
                           </div>
+                          {score && (
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: getRiskColor(score.risk_level) }}>
+                              Reliability: {score.payment_reliability_score.toFixed(0)}/100 • {getRiskBadgeText(score.risk_level)}
+                            </div>
+                          )}
                         </div>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                           {score && (

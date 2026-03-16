@@ -6,51 +6,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { userId, invoiceId, dueDate } = req.body;
+  const { userId, invoiceId, clientId, dueDate } = req.body;
 
-  if (!userId || !invoiceId || !dueDate) {
+  if (!userId || !invoiceId || !clientId || !dueDate) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
     const dueDateObj = new Date(dueDate);
-    const now = new Date();
 
-    // Schedule 3 reminders: Day 3 overdue, Day 7 overdue, Day 14 overdue
+    // Schedule day 3 reminder
+    const day3Date = new Date(dueDateObj);
+    day3Date.setDate(day3Date.getDate() + 3);
+
+    // Schedule day 7 reminder
+    const day7Date = new Date(dueDateObj);
+    day7Date.setDate(day7Date.getDate() + 7);
+
     const reminders = [
-      { days: 3, type: 'friendly' },
-      { days: 7, type: 'firm' },
-      { days: 14, type: 'final' }
+      {
+        user_id: userId,
+        invoice_id: invoiceId,
+        client_id: clientId,
+        reminder_type: 'day_3',
+        scheduled_for: day3Date.toISOString(),
+        status: 'pending',
+      },
+      {
+        user_id: userId,
+        invoice_id: invoiceId,
+        client_id: clientId,
+        reminder_type: 'day_7',
+        scheduled_for: day7Date.toISOString(),
+        status: 'pending',
+      },
     ];
 
-    const scheduledReminders = [];
+    const { data, error } = await supabase
+      .from('scheduled_reminders')
+      .insert(reminders)
+      .select();
 
-    for (const reminder of reminders) {
-      const scheduledDate = new Date(dueDateObj);
-      scheduledDate.setDate(scheduledDate.getDate() + reminder.days);
+    if (error) throw error;
 
-      // Only schedule if date is in the future
-      if (scheduledDate > now) {
-        const { data, error } = await supabase
-          .from('reminder_sequences')
-          .insert([{
-            user_id: userId,
-            invoice_id: invoiceId,
-            sequence_number: reminders.indexOf(reminder) + 1,
-            reminder_type: reminder.type,
-            scheduled_for: scheduledDate.toISOString(),
-            status: 'pending'
-          }])
-          .select();
-
-        if (error) throw error;
-        scheduledReminders.push(data);
-      }
-    }
-
-    return res.status(200).json({ success: true, reminders: scheduledReminders });
+    return res.status(200).json({ success: true, reminders: data });
   } catch (error: any) {
-    console.error('Schedule error:', error);
-    return res.status(500).json({ error: error.message || 'Failed to schedule reminders' });
+    console.error('Schedule reminders error:', error);
+    return res.status(500).json({ error: error.message });
   }
 }
