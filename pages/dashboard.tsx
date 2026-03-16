@@ -35,6 +35,16 @@ interface Subscription {
   clientLimit: number;
   daysLeftInTrial: number;
   trialEndsAt: string;
+  plan?: string;
+}
+
+interface CashFlowForecast {
+  totalOwed: number;
+  projectedIncome: number;
+  projectedDate: string;
+  breakdown: any[];
+  accuracy: string;
+  message: string | null;
 }
 
 export default function Dashboard() {
@@ -54,6 +64,8 @@ export default function Dashboard() {
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [cashFlowForecast, setCashFlowForecast] = useState<CashFlowForecast | null>(null);
+  const [forecastLoading, setForecastLoading] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -68,6 +80,23 @@ export default function Dashboard() {
     };
     checkAuth();
   }, [router]);
+
+  const fetchCashFlowForecast = async (userId: string) => {
+    setForecastLoading(true);
+    try {
+      const res = await fetch('/api/forecast-cashflow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      const data = await res.json();
+      setCashFlowForecast(data);
+    } catch (err) {
+      console.error('Forecast error:', err);
+    } finally {
+      setForecastLoading(false);
+    }
+  };
 
   const fetchData = async (userId: string) => {
     try {
@@ -91,6 +120,9 @@ export default function Dashboard() {
         .eq('user_id', userId)
         .order('due_date', { ascending: false });
       setInvoices(invoicesData || []);
+
+      // Fetch cash flow forecast
+      await fetchCashFlowForecast(userId);
 
       // Calculate scores for all clients
       if (clientsData) {
@@ -292,7 +324,6 @@ export default function Dashboard() {
   const totalOwed = allPendingInvoices.reduce((sum, inv) => sum + inv.amount, 0);
   const latePayments = invoices.filter(inv => inv.status === 'paid_late').length;
 
-  // Get risk badge color
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
       case 'low': return { bg: '#dcfce7', text: '#166534' };
@@ -321,7 +352,7 @@ export default function Dashboard() {
         <div style={{ background: '#f0f4ff', padding: '16px 64px', borderBottom: '1px solid #e0e8ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <p style={{ fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>Free Trial ({subscription.daysLeftInTrial} days left)</p>
-            <p style={{ fontSize: '13px', color: '#1e40af', opacity: 0.8 }}>Upgrade to Pro for unlimited invoices and clients.</p>
+            <p style={{ fontSize: '13px', color: '#1e40af', opacity: 0.8 }}>Upgrade to Pro or Plus for unlimited invoices and clients.</p>
           </div>
           <button
             onClick={() => router.push('/pricing')}
@@ -387,6 +418,72 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* CASH FLOW FORECAST */}
+            {subscription?.status === 'active' && subscription.plan === 'plus' && cashFlowForecast && !cashFlowForecast.message && (
+              <div style={{ marginBottom: '40px', padding: '24px', background: '#f0f4ff', borderRadius: '8px', border: '1px solid #e0e8ff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '4px' }}>💰 Cash Flow Forecast</h3>
+                    <p style={{ fontSize: '14px', color: '#666' }}>Based on your clients' payment history</p>
+                  </div>
+                  <span style={{ background: '#e0e8ff', color: '#1e40af', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: '600' }}>
+                    {cashFlowForecast.accuracy}
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+                  <div>
+                    <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase' }}>Projected Income</p>
+                    <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>${cashFlowForecast.projectedIncome.toFixed(2)}</div>
+                    <p style={{ fontSize: '14px', color: '#666' }}>Should arrive by <strong>{cashFlowForecast.projectedDate}</strong></p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase' }}>Payment Timeline</p>
+                    {cashFlowForecast.breakdown.length > 0 && (
+                      <div style={{ fontSize: '14px', color: '#666' }}>
+                        <p style={{ marginBottom: '8px' }}>📅 Next payment: <strong>{cashFlowForecast.breakdown[0].projectedPayDate}</strong></p>
+                        <p>({cashFlowForecast.breakdown[0].daysUntilPayment} days from now)</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Timeline */}
+                <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e0e8ff' }}>
+                  <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '16px', textTransform: 'uppercase' }}>Payment Schedule</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {cashFlowForecast.breakdown.slice(0, 5).map((item: any, i: number) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'white', borderRadius: '6px' }}>
+                        <div>
+                          <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '2px' }}>Invoice #{item.invoiceNumber}</p>
+                          <p style={{ fontSize: '12px', color: '#666' }}>{item.projectedPayDate} ({item.daysUntilPayment} days)</p>
+                        </div>
+                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#1e40af' }}>${item.amount.toFixed(2)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* PLUS FEATURE TEASER */}
+            {subscription?.status === 'active' && subscription.plan !== 'plus' && (
+              <div style={{ marginBottom: '40px', padding: '24px', background: '#f3f0ff', borderRadius: '8px', border: '2px dashed #7c3aed' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '4px' }}>💰 Cash Flow Forecasting (Plus Feature)</h3>
+                    <p style={{ fontSize: '14px', color: '#666' }}>See exactly when your invoices will be paid based on client history.</p>
+                  </div>
+                  <button
+                    onClick={() => router.push('/pricing')}
+                    style={{ background: '#7c3aed', color: 'white', padding: '8px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap' }}
+                  >
+                    Upgrade to Plus
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* All Pending Invoices */}
             {allPendingInvoices.length > 0 && (
               <div>
@@ -449,6 +546,37 @@ export default function Dashboard() {
                 {showInvoiceForm ? '✕ Cancel' : '+ New Invoice'}
               </button>
             </div>
+
+            {/* Share Client Portal */}
+            {invoices.length > 0 && clients.length > 0 && (
+              <div style={{ marginBottom: '24px', padding: '16px', background: '#e3f2fd', borderRadius: '8px', border: '1px solid #bbdefb' }}>
+                <p style={{ fontSize: '14px', color: '#1565c0', fontWeight: '600', marginBottom: '12px' }}>
+                  💡 Tip: Share invoice status with clients to reduce follow-ups
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {clients.map(client => (
+                    <div key={client.id} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        readOnly
+                        value={`${typeof window !== 'undefined' ? window.location.origin : ''}/client/${client.id}`}
+                        style={{ flex: 1, padding: '8px 12px', border: '1px solid #90caf9', borderRadius: '6px', fontSize: '12px', background: 'white' }}
+                      />
+                      <button
+                        onClick={() => {
+                          const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/client/${client.id}`;
+                          navigator.clipboard.writeText(url);
+                          setSuccess(`Copied ${client.name}'s portal link!`);
+                        }}
+                        style={{ background: '#1565c0', color: 'white', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '12px', whiteSpace: 'nowrap' }}
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {showInvoiceForm && (
               <form onSubmit={addInvoice} style={{ background: '#f8f8f8', padding: '24px', borderRadius: '8px', marginBottom: '24px', border: '1px solid #e0e0e0' }}>
