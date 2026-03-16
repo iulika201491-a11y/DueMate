@@ -43,7 +43,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [clientScores, setClientScores] = useState<ClientScore[]>({});
+  const [clientScores, setClientScores] = useState<Record<string, ClientScore>>({});
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
