@@ -206,6 +206,7 @@ export default function Dashboard() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [showNewClient, setShowNewClient] = useState(false);
   const [showNewInvoice, setShowNewInvoice] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [newClient, setNewClient] = useState({ name: '', email: '' });
   const [newInvoice, setNewInvoice] = useState({ client_id: '', invoice_number: '', amount: '', due_date: '' });
   const [loadingAction, setLoadingAction] = useState(false);
@@ -292,13 +293,23 @@ export default function Dashboard() {
     }
     setLoadingAction(true);
     try {
-      const { error } = await supabase
-        .from('clients')
-        .insert([{ user_id: user.id, name: newClient.name, email: newClient.email }]);
-      if (error) throw error;
+      if (editingClient) {
+        const { error } = await supabase
+          .from('clients')
+          .update({ name: newClient.name, email: newClient.email })
+          .eq('id', editingClient.id);
+        if (error) throw error;
+        setMessage({ type: 'success', text: 'Client updated!' });
+        setEditingClient(null);
+      } else {
+        const { error } = await supabase
+          .from('clients')
+          .insert([{ user_id: user.id, name: newClient.name, email: newClient.email }]);
+        if (error) throw error;
+        setMessage({ type: 'success', text: 'Client added!' });
+      }
       setNewClient({ name: '', email: '' });
       setShowNewClient(false);
-      setMessage({ type: 'success', text: 'Client added!' });
       await fetchData(user.id);
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     } catch (error: any) {
@@ -306,6 +317,34 @@ export default function Dashboard() {
     } finally {
       setLoadingAction(false);
     }
+  };
+
+  const deleteClient = async (clientId: string) => {
+    if (!confirm('Are you sure you want to delete this client?')) return;
+    setLoadingAction(true);
+    try {
+      const { error } = await supabase.from('clients').delete().eq('id', clientId);
+      if (error) throw error;
+      setMessage({ type: 'success', text: 'Client deleted!' });
+      await fetchData(user.id);
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
+  const startEditClient = (client: Client) => {
+    setEditingClient(client);
+    setNewClient({ name: client.name, email: client.email });
+    setShowNewClient(true);
+  };
+
+  const cancelEditClient = () => {
+    setEditingClient(null);
+    setNewClient({ name: '', email: '' });
+    setShowNewClient(false);
   };
 
   const addInvoice = async (e: React.FormEvent) => {
@@ -407,6 +446,12 @@ export default function Dashboard() {
     setLoadingAction(true);
     try {
       const client = clients.find((c) => c.id === invoice.client_id);
+      if (!client) {
+        setMessage({ type: 'error', text: 'Client not found' });
+        setLoadingAction(false);
+        return;
+      }
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const due = new Date(invoice.due_date);
@@ -418,8 +463,9 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           emailType: 'reminder',
-          recipientEmail: client?.email,
-          clientName: client?.name || 'Client',
+          recipientEmail: client.email || '',
+          freelancerName: user.user_metadata?.full_name || 'Freelancer',
+          clientName: client.name || 'Client',
           invoiceNumber: invoice.invoice_number,
           amount: invoice.amount,
           daysOverdue: daysOverdue > 0 ? daysOverdue : 0,
@@ -460,7 +506,7 @@ export default function Dashboard() {
     const amount = parseFloat(lateFeeCalculator.amount);
     const daysLate = parseInt(lateFeeCalculator.daysLate);
     const monthsLate = daysLate / 30;
-    const monthlyRate = 0.015; // 1.5% per month
+    const monthlyRate = 0.015;
     const fee = amount * monthlyRate * monthsLate;
     const total = amount + fee;
     setLateFeeResult({ fee: parseFloat(fee.toFixed(2)), total: parseFloat(total.toFixed(2)) });
@@ -877,10 +923,13 @@ export default function Dashboard() {
         {activeTab === 'clients' && (
           <div>
             <button
-              onClick={() => setShowNewClient(!showNewClient)}
+              onClick={() => {
+                if (editingClient) cancelEditClient();
+                else setShowNewClient(!showNewClient);
+              }}
               style={{ background: '#3b82f6', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, marginBottom: '20px' }}
             >
-              + New Client
+              {showNewClient ? '✕ Cancel' : '+ New Client'}
             </button>
 
             {showNewClient && (
@@ -901,9 +950,16 @@ export default function Dashboard() {
                     style={{ padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
                   />
                 </div>
-                <button type="submit" disabled={loadingAction} style={{ background: '#10b981', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: loadingAction ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 600, opacity: loadingAction ? 0.6 : 1 }}>
-                  Add Client
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="submit" disabled={loadingAction} style={{ background: '#10b981', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: loadingAction ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 600, opacity: loadingAction ? 0.6 : 1 }}>
+                    {editingClient ? 'Update Client' : 'Add Client'}
+                  </button>
+                  {editingClient && (
+                    <button type="button" onClick={cancelEditClient} style={{ background: '#6b7280', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </form>
             )}
 
@@ -928,20 +984,54 @@ export default function Dashboard() {
                             ${paidAmount.toFixed(2)} paid of ${totalAmount.toFixed(2)}
                           </div>
                         </div>
-                        {score && (
-                          <div
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                          {score && (
+                            <div
+                              style={{
+                                background: getRiskColor(score.risk_level),
+                                color: 'white',
+                                padding: '6px 12px',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {score.risk_level.charAt(0).toUpperCase() + score.risk_level.slice(1)} Risk
+                            </div>
+                          )}
+                          <button
+                            onClick={() => startEditClient(client)}
                             style={{
-                              background: getRiskColor(score.risk_level),
-                              color: 'white',
+                              background: '#f3f4f6',
+                              color: '#1f2937',
                               padding: '6px 12px',
+                              border: '1px solid #d1d5db',
                               borderRadius: '4px',
+                              cursor: 'pointer',
                               fontSize: '12px',
                               fontWeight: 600,
                             }}
                           >
-                            {score.risk_level.charAt(0).toUpperCase() + score.risk_level.slice(1)} Risk
-                          </div>
-                        )}
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteClient(client.id)}
+                            disabled={loadingAction}
+                            style={{
+                              background: '#fee2e2',
+                              color: '#dc2626',
+                              padding: '6px 12px',
+                              border: '1px solid #fecaca',
+                              borderRadius: '4px',
+                              cursor: loadingAction ? 'not-allowed' : 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              opacity: loadingAction ? 0.6 : 1,
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
