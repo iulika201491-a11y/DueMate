@@ -20,6 +20,15 @@ interface Invoice {
   created_at: string;
 }
 
+interface ClientScore {
+  reliabilityScore: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical' | 'unknown';
+  totalInvoices: number;
+  paidInvoices: number;
+  overdueInvoices: number;
+  avgDaysToPay: number;
+}
+
 interface Subscription {
   status: string;
   invoiceLimit: number;
@@ -32,6 +41,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [clients, setClients] = useState<Client[]>([]);
+  const [clientScores, setClientScores] = useState<{ [key: string]: ClientScore }>({});
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
@@ -81,6 +91,21 @@ export default function Dashboard() {
         .eq('user_id', userId)
         .order('due_date', { ascending: false });
       setInvoices(invoicesData || []);
+
+      // Calculate scores for all clients
+      if (clientsData) {
+        const scores: { [key: string]: ClientScore } = {};
+        for (const client of clientsData) {
+          const scoreRes = await fetch('/api/calculate-client-score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, clientId: client.id }),
+          });
+          const scoreData = await scoreRes.json();
+          scores[client.id] = scoreData;
+        }
+        setClientScores(scores);
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
     }
@@ -150,9 +175,29 @@ export default function Dashboard() {
 
       if (err) throw err;
 
+      // Schedule automatic reminders
+      const { data: insertedInvoice } = await supabase
+        .from('invoices')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('invoice_number', newInvoice.invoice_number)
+        .single();
+
+      if (insertedInvoice) {
+        await fetch('/api/schedule-reminders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            invoiceId: insertedInvoice.id,
+            dueDate: newInvoice.due_date
+          })
+        });
+      }
+
       setNewInvoice({ client_id: '', invoice_number: '', amount: '', due_date: '' });
       setShowInvoiceForm(false);
-      setSuccess('Invoice added successfully');
+      setSuccess('Invoice added successfully. Reminders scheduled automatically.');
       await fetchData(user.id);
     } catch (err: any) {
       setError(err.message || 'Failed to add invoice');
@@ -167,7 +212,7 @@ export default function Dashboard() {
       today.setHours(0, 0, 0, 0);
       const due = new Date(dueDate);
       due.setHours(0, 0, 0, 0);
-      
+
       const isPastDue = due < today;
       const { error: err } = await supabase
         .from('invoices')
@@ -242,11 +287,21 @@ export default function Dashboard() {
     );
   }
 
-  // Fixed: Show ALL pending invoices, not just overdue ones
   const allPendingInvoices = invoices.filter(inv => inv.status === 'pending');
   const overdueInvoices = allPendingInvoices.filter(inv => new Date(inv.due_date) < new Date());
   const totalOwed = allPendingInvoices.reduce((sum, inv) => sum + inv.amount, 0);
   const latePayments = invoices.filter(inv => inv.status === 'paid_late').length;
+
+  // Get risk badge color
+  const getRiskColor = (riskLevel: string) => {
+    switch (riskLevel) {
+      case 'low': return { bg: '#dcfce7', text: '#166534' };
+      case 'medium': return { bg: '#fef3c7', text: '#92400e' };
+      case 'high': return { bg: '#fee2e2', text: '#991b1b' };
+      case 'critical': return { bg: '#fee2e2', text: '#7f1d1d' };
+      default: return { bg: '#f3f4f6', text: '#6b7280' };
+    }
+  };
 
   return (
     <div style={{ background: '#ffffff', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#1a1a1a' }}>
@@ -341,7 +396,8 @@ export default function Dashboard() {
                     const client = clients.find(c => c.id === inv.client_id);
                     const daysOverdue = Math.floor((new Date().getTime() - new Date(inv.due_date).getTime()) / (1000 * 60 * 60 * 24));
                     const isOverdue = new Date(inv.due_date) < new Date();
-                    
+                    const score = clientScores[inv.client_id];
+
                     return (
                       <div key={inv.id} style={{ padding: '16px', borderBottom: idx < allPendingInvoices.length - 1 ? '1px solid #e0e0e0' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
@@ -349,6 +405,7 @@ export default function Dashboard() {
                           <p style={{ fontSize: '14px', color: '#666' }}>
                             {client?.name} • ${inv.amount.toFixed(2)} • Due {inv.due_date}
                             {isOverdue && ` • ${daysOverdue} days overdue`}
+                            {score && ` • Client reliability: ${score.reliabilityScore}%`}
                           </p>
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
@@ -368,7 +425,7 @@ export default function Dashboard() {
                             onClick={() => sendReminderEmailToClient(inv, client!)}
                             style={{ background: '#e3f2fd', color: '#1565c0', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
                           >
-                            📧 Remind Client
+                            📧 Remind
                           </button>
                         </div>
                       </div>
@@ -503,29 +560,41 @@ export default function Dashboard() {
             {clients.length > 0 ? (
               <div style={{ background: '#f8f8f8', borderRadius: '8px', border: '1px solid #e0e0e0', overflow: 'hidden' }}>
                 {clients.map((client, i) => {
-                  const clientInvoices = invoices.filter(inv => inv.client_id === client.id);
-                  const latePaymentsForClient = clientInvoices.filter(inv => inv.status === 'paid_late').length;
-                  const avgDaysLate = latePaymentsForClient > 0
-                    ? Math.round(clientInvoices
-                        .filter(inv => inv.status === 'paid_late')
-                        .reduce((sum, inv) => sum + Math.floor((new Date(inv.paid_date!).getTime() - new Date(inv.due_date).getTime()) / (1000 * 60 * 60 * 24)), 0) / latePaymentsForClient)
-                    : 0;
+                  const score = clientScores[client.id];
+                  const riskColor = score ? getRiskColor(score.riskLevel) : getRiskColor('unknown');
 
                   return (
                     <div key={client.id} style={{ padding: '16px', borderBottom: i < clients.length - 1 ? '1px solid #e0e0e0' : 'none' }}>
-                      <p style={{ fontWeight: '600', marginBottom: '8px' }}>{client.name}</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', fontSize: '14px', color: '#666' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                        <p style={{ fontWeight: '600', fontSize: '16px' }}>{client.name}</p>
+                        {score && (
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>
+                              {score.reliabilityScore}%
+                            </span>
+                            <span style={{ background: riskColor.bg, color: riskColor.text, padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: '600', textTransform: 'capitalize' }}>
+                              {score.riskLevel}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', fontSize: '14px', color: '#666' }}>
                         <div>
                           <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>TOTAL INVOICES</p>
-                          <p style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{clientInvoices.length}</p>
+                          <p style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{score?.totalInvoices || 0}</p>
                         </div>
                         <div>
-                          <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>LATE PAYMENTS</p>
-                          <p style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{latePaymentsForClient}</p>
+                          <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>PAID</p>
+                          <p style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{score?.paidInvoices || 0}</p>
                         </div>
                         <div>
-                          <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>AVG DAYS LATE</p>
-                          <p style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{avgDaysLate}</p>
+                          <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>OVERDUE</p>
+                          <p style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{score?.overdueInvoices || 0}</p>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>AVG DAYS TO PAY</p>
+                          <p style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{score?.avgDaysToPay || 0} days</p>
                         </div>
                       </div>
                     </div>
