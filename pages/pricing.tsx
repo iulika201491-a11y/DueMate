@@ -44,7 +44,7 @@ export default function Pricing(){
       {/* Header */}
       <section style={{padding:'40px 20px',textAlign:'center',maxWidth:'800px',margin:'0 auto'}}>
         <h1 style={{fontSize:'40px',fontWeight:700,marginBottom:'12px'}}>Simple Pricing</h1>
-        <p style={{fontSize:'16px',color:'#666',marginBottom:'0}}>Start free. Upgrade when you're ready. Cancel anytime.</p>
+        <p style={{fontSize:'16px',color:'#666',marginBottom:'0'}}>Start free. Upgrade when you're ready. Cancel anytime.</p>
       </section>
 
       {/* Pricing Cards */}
@@ -54,13 +54,13 @@ export default function Pricing(){
           {/* Free Trial Card */}
           <div style={{padding:'32px',border:'1px solid #e5e7eb',borderRadius:'12px',background:'#f9fafb',display:'flex',flexDirection:'column'}}>
             <div style={{marginBottom:'24px'}}>
-              <h2 style={{fontSize:'24px',fontWeight:700,marginBottom:'8px',margin:'0 0 8px 0'}}>Free Trial</h2>
-              <p style={{fontSize:'14px',color:'#666',marginBottom:'0}}>Get started free</p>
+              <h2 style={{fontSize:'24px',fontWeight:700,margin:'0 0 8px 0'}}>Free Trial</h2>
+              <p style={{fontSize:'14px',color:'#666',margin:'0'}}>Get started free</p>
             </div>
 
             <div style={{marginBottom:'24px'}}>
               <div style={{fontSize:'48px',fontWeight:700,marginBottom:'4px'}}>$0</div>
-              <p style={{fontSize:'14px',color:'#666',marginBottom:'0}}>7 days, then upgrade</p>
+              <p style={{fontSize:'14px',color:'#666',margin:'0'}}>7 days, then upgrade</p>
             </div>
 
             <button onClick={()=>user?router.push('/dashboard'):router.push('/auth')} style={{width:'100%',padding:'12px',background:'#1a1a1a',color:'white',border:'none',borderRadius:'8px',cursor:'pointer',fontWeight:600,fontSize:'14px',marginBottom:'24px'}}>
@@ -69,16 +69,16 @@ export default function Pricing(){
 
             <div style={{fontSize:'13px',color:'#6b7280',marginBottom:'20px'}}>
               <p style={{margin:'0 0 8px 0',fontWeight:600}}>Limited to:</p>
-              <ul style={{listStyle:'none',padding:0,margin:0}}>
+              <ul style={{listStyle:'none',padding:'0',margin:'0'}}>
                 <li style={{marginBottom:'6px'}}>✓ 2 clients</li>
                 <li style={{marginBottom:'6px'}}>✓ 3 invoices</li>
                 <li style={{marginBottom:'6px'}}>✓ Manual reminders</li>
-                <li>✓ Client scores</li>
+                <li style={{margin:'0'}}>✓ Client scores</li>
               </ul>
             </div>
 
             <div style={{borderTop:'1px solid #e5e7eb',paddingTop:'16px',marginTop:'auto'}}>
-              <p style={{fontSize:'12px',color:'#9ca3af',margin:0}}>No credit card required</p>
+              <p style={{fontSize:'12px',color:'#9ca3af',margin:'0'}}>No credit card required</p>
             </div>
           </div>
 
@@ -87,13 +87,13 @@ export default function Pricing(){
             <div style={{position:'absolute',top:'-12px',left:'20px',background:'#3b82f6',color:'white',padding:'4px 16px',fontSize:'12px',fontWeight:700,borderRadius:'4px'}}>POPULAR</div>
 
             <div style={{marginBottom:'24px'}}>
-              <h2 style={{fontSize:'24px',fontWeight:700,marginBottom:'8px',margin:'0 0 8px 0'}}>Pro</h2>
-              <p style={{fontSize:'14px',color:'#666',marginBottom:'0}}>Most freelancers</p>
+              <h2 style={{fontSize:'24px',fontWeight:700,margin:'0 0 8px 0'}}>Pro</h2>
+              <p style={{fontSize:'14px',color:'#666',margin:'0'}}>Most freelancers</p>
             </div>
 
             <div style={{marginBottom:'24px'}}>
               <div style={{fontSize:'48px',fontWeight:700,marginBottom:'4px'}}>$12</div>
-              <p style={{fontSize:'14px',color:'#666',marginBottom:'0}}>per month</p>
+              <p style={{fontSize:'14px',color:'#666',margin:'0'}}>per month</p>
             </div>
 
             <button onClick={()=>handleCheckout('pro')} disabled={isSubscribed} style={{width:'100%',padding:'12px',background:isSubscribed?'#d1d5db':'#3b82f6',color:isSubscribed?'#666':'white',border:'none',borderRadius:'8px',cursor:isSubscribed?'not-allowed':'pointer',fontWeight:600,fontSize:'14px',marginBottom:'24px'}}>
@@ -102,18 +102,18 @@ export default function Pricing(){
 
             <div style={{fontSize:'13px',color:'#1f2937'}}>
               <p style={{margin:'0 0 8px 0',fontWeight:600}}>Everything in Free Trial, plus:</p>
-              <ul style={{listStyle:'none',padding:0,margin:0}}>
+              <ul style={{listStyle:'none',padding:'0',margin:'0'}}>
                 <li style={{marginBottom:'6px'}}>✓ Unlimited invoices</li>
                 <li style={{marginBottom:'6px'}}>✓ Unlimited clients</li>
                 <li style={{marginBottom:'6px'}}>✓ Automated reminders (day 3 & 7)</li>
                 <li style={{marginBottom:'6px'}}>✓ Email alerts</li>
                 <li style={{marginBottom:'6px'}}>✓ Payment tracking</li>
-                <li>✓ Email support</li>
+                <li style={{margin:'0'}}>✓ Email support</li>
               </ul>
             </div>
 
             <div style={{borderTop:'1px solid #e5e7eb',paddingTop:'16px',marginTop:'auto'}}>
-              <p style={{fontSize:'12px',color:'#666',margin:0}}>Best for growing freelancers</p>
+              <p style={{fontSize:'12px',color:'#666',margin:'0'}}>Best for growing freelancers</p>
             </div>
           </div>
 
@@ -122,13 +122,13 @@ export default function Pricing(){
             <div style={{position:'absolute',top:'-12px',left:'20px',background:'#7c3aed',color:'white',padding:'4px 16px',fontSize:'12px',fontWeight:700,borderRadius:'4px'}}>RECOMMENDED</div>
 
             <div style={{marginBottom:'24px'}}>
-              <h2 style={{fontSize:'24px',fontWeight:700,marginBottom:'8px',margin:'0 0 8px 0'}}>Plus</h2>
-              <p style={{fontSize:'14px',color:'#666',marginBottom:'0}}>Advanced analytics</p>
+              <h2 style={{fontSize:'24px',fontWeight:700,margin:'0 0 8px 0'}}>Plus</h2>
+              <p style={{fontSize:'14px',color:'#666',margin:'0'}}>Advanced analytics</p>
             </div>
 
             <div style={{marginBottom:'24px'}}>
               <div style={{fontSize:'48px',fontWeight:700,marginBottom:'4px'}}>$29</div>
-              <p style={{fontSize:'14px',color:'#666',marginBottom:'0}}>per month</p>
+              <p style={{fontSize:'14px',color:'#666',margin:'0'}}>per month</p>
             </div>
 
             <button onClick={()=>handleCheckout('plus')} disabled={isSubscribed} style={{width:'100%',padding:'12px',background:isSubscribed?'#d1d5db':'#7c3aed',color:isSubscribed?'#666':'white',border:'none',borderRadius:'8px',cursor:isSubscribed?'not-allowed':'pointer',fontWeight:600,fontSize:'14px',marginBottom:'24px'}}>
@@ -137,18 +137,18 @@ export default function Pricing(){
 
             <div style={{fontSize:'13px',color:'#1f2937'}}>
               <p style={{margin:'0 0 8px 0',fontWeight:600}}>Everything in Pro, plus:</p>
-              <ul style={{listStyle:'none',padding:0,margin:0}}>
+              <ul style={{listStyle:'none',padding:'0',margin:'0'}}>
                 <li style={{marginBottom:'6px'}}>✓ Cash flow forecasting</li>
                 <li style={{marginBottom:'6px'}}>✓ Payment analytics</li>
                 <li style={{marginBottom:'6px'}}>✓ Client payment patterns</li>
                 <li style={{marginBottom:'6px'}}>✓ Risk assessment</li>
                 <li style={{marginBottom:'6px'}}>✓ Advanced scoring</li>
-                <li>✓ Priority support</li>
+                <li style={{margin:'0'}}>✓ Priority support</li>
               </ul>
             </div>
 
             <div style={{borderTop:'1px solid #e5e7eb',paddingTop:'16px',marginTop:'auto'}}>
-              <p style={{fontSize:'12px',color:'#666',margin:0}}>For serious freelancers</p>
+              <p style={{fontSize:'12px',color:'#666',margin:'0'}}>For serious freelancers</p>
             </div>
           </div>
         </div>
@@ -170,8 +170,8 @@ export default function Pricing(){
             {q:'Do you have a monthly or annual option?',a:'Currently monthly only. Annual billing coming soon.'}
           ].map((item,i)=>(
             <div key={i} style={{marginBottom:'24px',paddingBottom:'24px',borderBottom:i<7?'1px solid #e5e7eb':'none'}}>
-              <h3 style={{fontSize:'15px',fontWeight:700,marginBottom:'8px',margin:'0 0 8px 0'}}>{item.q}</h3>
-              <p style={{fontSize:'14px',color:'#666',lineHeight:1.6,margin:0}}>{item.a}</p>
+              <h3 style={{fontSize:'15px',fontWeight:700,margin:'0 0 8px 0'}}>{item.q}</h3>
+              <p style={{fontSize:'14px',color:'#666',lineHeight:'1.6',margin:'0'}}>{item.a}</p>
             </div>
           ))}
         </div>
@@ -190,7 +190,7 @@ export default function Pricing(){
 
       {/* Footer */}
       <footer style={{borderTop:'1px solid #f0f0f0',padding:'32px 20px',textAlign:'center',color:'#666',fontSize:'12px'}}>
-        <p style={{margin:0}}>© 2026 DueMate. All rights reserved.</p>
+        <p style={{margin:'0'}}>© 2026 DueMate. All rights reserved.</p>
       </footer>
     </div>
   );
