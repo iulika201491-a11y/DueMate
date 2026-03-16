@@ -60,8 +60,7 @@ export default function Home() {
             <p style={{ fontSize: '16px', color: '#666' }}>average unpaid invoices per year</p>
           </div>
           <div>
-            <div style={{ fontSize: '48px', fontWeight: '700', color: '#1a1a1a', marginBottom: '12px' }}>8h/mo</div>
-            <p style={{ fontSize: '16px', color: '#666' }}>wasted chasing payments</p>
+            <div><div style={{fontSize:'48px',fontWeight:700,color:'#1a1a1a',marginBottom:'12px'}}>30%</div><p style={{fontSize:'16px',color:'#666'}}>of invoices paid late</p></div>
           </div>
         </div>
       </section>
