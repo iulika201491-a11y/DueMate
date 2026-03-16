@@ -95,7 +95,7 @@ export default function Dashboard() {
         .from('client_statistics')
         .select('*')
         .eq('user_id', userId);
-      const scoresMap = {};
+      const scoresMap: Record<string, ClientScore> = {};
       (scoreData || []).forEach((score: any) => {
         scoresMap[score.client_id] = score;
       });
