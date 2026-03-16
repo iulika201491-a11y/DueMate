@@ -36,11 +36,10 @@ export default function Pricing() {
     }
 
     // Different Stripe payment links for Pro and Plus
-    const paymentLinks = {
-      pro: 'https://buy.stripe.com/test_cNicN777y3ju4QO6I97Re00',
-      plus: 'https://buy.stripe.com/test_bJeaEZ9fG5rC830eaB7Re01'
-    };
-
+   const paymentLinks: any = {
+  pro: 'https://buy.stripe.com/8x25kFbnqateg0n5XhdAk00',
+  plus: 'https://buy.stripe.com/14AcN7cru58Ug0nadxdAk01'
+};
     window.location.href = paymentLinks[planType as keyof typeof paymentLinks] || paymentLinks.pro;
   };
 
