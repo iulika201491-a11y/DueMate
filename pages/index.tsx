@@ -148,27 +148,49 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* Dashboard Screenshots */}
             {/* Dashboard Screenshots */}
-      <section style={{ padding: '80px 40px', background: '#f9fafb' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h3 style={{ fontSize: '36px', fontWeight: 800, textAlign: 'center', marginBottom: '50px' }}>See DueMate in Action</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-            {/* Screenshot 1 */}
-            <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)' }}>
-              <div style={{ background: '#f3f4f6', padding: '20px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#6b7280' }}>
-                Dashboard Overview
-              </div>
-              <div style={{ padding: '20px', height: '400px', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '12px' }}>📊</div>
-                  <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Track invoices in one place</p>
-                  <p style={{ fontSize: '13px', color: '#9ca3af', margin: '8px 0 0 0' }}>See payment status and client details instantly</p>
-                </div>
-              </div>
-            </div>
+<section style={{ padding: '80px 40px', background: '#f9fafb' }}>
+  <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <h3 style={{ fontSize: '36px', fontWeight: 800, textAlign: 'center', marginBottom: '50px' }}>See DueMate in Action</h3>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+      {/* Feature 1 */}
+      <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+        <div style={{ background: '#f3f4f6', padding: '20px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#6b7280' }}>Track All Invoices</div>
+        <div style={{ padding: '40px 20px', height: '300px', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '64px', marginBottom: '12px' }}>📊</div>
+            <p style={{ fontSize: '16px', color: '#6b7280', margin: 0, fontWeight: 600 }}>Centralized Dashboard</p>
+            <p style={{ fontSize: '14px', color: '#9ca3af', margin: '8px 0 0 0' }}>See all invoices and payment status at a glance</p>
+          </div>
+        </div>
+      </div>
 
+      {/* Feature 2 */}
+      <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+        <div style={{ background: '#f3f4f6', padding: '20px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#6b7280' }}>Automated Reminders</div>
+        <div style={{ padding: '40px 20px', height: '300px', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '64px', marginBottom: '12px' }}>📧</div>
+            <p style={{ fontSize: '16px', color: '#6b7280', margin: 0, fontWeight: 600 }}>Smart Reminders</p>
+            <p style={{ fontSize: '14px', color: '#9ca3af', margin: '8px 0 0 0' }}>Automatic payment reminders on day 3 & 7</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Feature 3 */}
+      <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+        <div style={{ background: '#f3f4f6', padding: '20px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#6b7280' }}>Client Reliability</div>
+        <div style={{ padding: '40px 20px', height: '300px', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '64px', marginBottom: '12px' }}>🎯</div>
+            <p style={{ fontSize: '16px', color: '#6b7280', margin: 0, fontWeight: 600 }}>Know Your Clients</p>
+            <p style={{ fontSize: '14px', color: '#9ca3af', margin: '8px 0 0 0' }}>See which clients pay on time vs. late</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
             {/* Screenshot 2 */}
             <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)' }}>
               <div style={{ background: '#f3f4f6', padding: '20px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#6b7280' }}>
