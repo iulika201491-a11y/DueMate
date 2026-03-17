@@ -300,11 +300,11 @@ export default function LandingPage() {
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, textAlign: 'left', fontSize: '14px', color: '#6b7280' }}>
                 <li style={{ marginBottom: '12px', paddingLeft: '24px', position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 0 }}>✓</span>
-                  <strong>Unlimited</strong> clients & invoices
+                  <strong>Unlimited</strong> clients and invoices
                 </li>
                 <li style={{ marginBottom: '12px', paddingLeft: '24px', position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 0 }}>✓</span>
-                  Automated reminders (day 3 & 7)
+                  Automated reminders (day 3 and 7)
                 </li>
                 <li style={{ marginBottom: '12px', paddingLeft: '24px', position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 0 }}>✓</span>
@@ -327,7 +327,7 @@ export default function LandingPage() {
 
             {/* Plus */}
             <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '32px', textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: 700', marginBottom: '8px' }}>Plus</div>
+              <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px' }}>Plus</div>
               <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>For serious businesses</div>
               <div style={{ fontSize: '48px', fontWeight: 800, marginBottom: '8px' }}>$29</div>
               <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>/month</div>
@@ -420,7 +420,7 @@ export default function LandingPage() {
       {/* Trust Section */}
       <section style={{ padding: '60px 40px', background: '#f3f4f6', borderTop: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-          <h3 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '32px' }}>Built with Security & Trust in Mind</h3>
+          <h3 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '32px' }}>Built with Security and Trust in Mind</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
             <div>
               <div style={{ fontSize: '32px', marginBottom: '12px' }}>🔐</div>
@@ -440,7 +440,7 @@ export default function LandingPage() {
             <div>
               <div style={{ fontSize: '32px', marginBottom: '12px' }}>📱</div>
               <div style={{ fontWeight: 600, marginBottom: '4px' }}>All Integrations</div>
-              <div style={{ fontSize: '13px', color: '#6b7280' }}>Works with Stripe, Resend & Supabase</div>
+              <div style={{ fontSize: '13px', color: '#6b7280' }}>Works with Stripe, Resend and Supabase</div>
             </div>
           </div>
         </div>
@@ -454,7 +454,7 @@ export default function LandingPage() {
             DueMate was built by a solo developer and freelancer who spent way too much time chasing late payments. After losing thousands in unpaid invoices and wasting 8+ hours per month on follow-ups, I built a tool to solve the problem once and for all.
           </p>
           <p style={{ fontSize: '16px', color: '#6b7280', lineHeight: 1.6 }}>
-            DueMate is now used by 500+ freelancers who've collectively tracked <strong>$2M+</strong> in invoices and sent <strong>5,000+ automated reminders</strong>. Every feature is built based on real freelancer feedback.
+            DueMate is now used by 500+ freelancers who have collectively tracked <strong>$2M+</strong> in invoices and sent <strong>5,000+ automated reminders</strong>. Every feature is built based on real freelancer feedback.
           </p>
         </div>
       </section>
