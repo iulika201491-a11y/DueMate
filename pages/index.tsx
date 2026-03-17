@@ -22,8 +22,12 @@ export default function LandingPage() {
   return (
     <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#1f2937', background: '#fff' }}>
       {/* Navigation */}
+           {/* Navigation */}
       <nav style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>DueMate</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => router.push('/')}>
+          <img src="/logo.png" alt="DueMate" style={{ height: '32px', width: 'auto' }} />
+          <span style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>DueMate</span>
+        </div>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           <Link href="/guide" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>
             How It Works
@@ -146,6 +150,7 @@ export default function LandingPage() {
       </section>
 
       {/* Dashboard Screenshots */}
+            {/* Dashboard Screenshots */}
       <section style={{ padding: '80px 40px', background: '#f9fafb' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h3 style={{ fontSize: '36px', fontWeight: 800, textAlign: 'center', marginBottom: '50px' }}>See DueMate in Action</h3>
@@ -158,13 +163,42 @@ export default function LandingPage() {
               <div style={{ padding: '20px', height: '400px', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '48px', marginBottom: '12px' }}>📊</div>
-                  <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Overview tab showing:</p>
-                  <p style={{ fontSize: '13px', color: '#9ca3af', margin: '8px 0 0 0' }}>• Total owed ($11.00)</p>
-                  <p style={{ fontSize: '13px', color: '#9ca3af', margin: '4px 0 0 0' }}>• Overdue invoices (1)</p>
-                  <p style={{ fontSize: '13px', color: '#9ca3af', margin: '4px 0 0 0' }}>• Client reliability scores</p>
+                  <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Track invoices in one place</p>
+                  <p style={{ fontSize: '13px', color: '#9ca3af', margin: '8px 0 0 0' }}>See payment status and client details instantly</p>
                 </div>
               </div>
             </div>
+
+            {/* Screenshot 2 */}
+            <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)' }}>
+              <div style={{ background: '#f3f4f6', padding: '20px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#6b7280' }}>
+                Invoice Management
+              </div>
+              <div style={{ padding: '20px', height: '400px', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '12px' }}>📝</div>
+                  <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Create and manage invoices</p>
+                  <p style={{ fontSize: '13px', color: '#9ca3af', margin: '8px 0 0 0' }}>Quick actions and automated reminders</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Screenshot 3 */}
+            <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)' }}>
+              <div style={{ background: '#f3f4f6', padding: '20px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#6b7280' }}>
+                Client Management
+              </div>
+              <div style={{ padding: '20px', height: '400px', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '12px' }}>👥</div>
+                  <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Know your clients better</p>
+                  <p style={{ fontSize: '13px', color: '#9ca3af', margin: '8px 0 0 0' }}>Reliability scores and payment history</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
             {/* Screenshot 2 */}
             <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)' }}>

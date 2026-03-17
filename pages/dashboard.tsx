@@ -530,17 +530,35 @@ export default function Dashboard() {
   return (
     <div style={{ background: '#f9fafb', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#1f2937' }}>
       {/* Navigation */}
-      <nav style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '20px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 700, margin: 0 }}>DueMate</h1>
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            router.push('/');
-          }}
-          style={{ background: '#ef4444', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
-        >
-          Sign Out
-        </button>
+            {/* Navigation */}
+      <nav style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => router.push('/')}>
+          <img src="/logo.png" alt="DueMate" style={{ height: '32px', width: 'auto' }} />
+          <span style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>DueMate</span>
+        </div>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <Link href="/guide" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>
+            How It Works
+          </Link>
+          <Link href="/pricing" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>
+            Pricing
+          </Link>
+          <button
+            onClick={() => router.push('/auth')}
+            style={{
+              background: '#3b82f6',
+              color: 'white',
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 600,
+            }}
+          >
+            Sign In
+          </button>
+        </div>
       </nav>
 
       {/* Trial Banner */}
