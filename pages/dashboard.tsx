@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
@@ -531,14 +530,19 @@ export default function Dashboard() {
   return (
     <div style={{ background: '#f9fafb', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#1f2937' }}>
       {/* Navigation */}
-            {/* Navigation */}
-    <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', position: 'sticky', top: 0, zIndex: 100 }}>
-  <img src="/logo.png" alt="DueMate" style={{ height: '120px', width: 'auto', cursor: 'pointer' }} onClick={() => router.push('/')} />
-  <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-    <Link href="/dashboard" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Dashboard</Link>
-    <button onClick={() => supabase.auth.signOut().then(() => router.push('/'))} style={{ background: '#ef4444', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>Sign Out</button>
-  </div>
-</nav>
+      <nav style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '20px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 700, margin: 0 }}>DueMate</h1>
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut();
+            router.push('/');
+          }}
+          style={{ background: '#ef4444', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
+        >
+          Sign Out
+        </button>
+      </nav>
+
       {/* Trial Banner */}
       {subscription?.status === 'trial' && (
         <div style={{ background: '#dbeafe', borderBottom: '1px solid #bfdbfe', padding: '16px 40px', textAlign: 'center' }}>
