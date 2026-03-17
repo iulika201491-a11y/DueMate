@@ -34,7 +34,7 @@ export default function Home() {
     <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1f2937' }}>
       {/* Navigation */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <img src="/logo.png" alt="DueMate" style={{ height: '80px', width: 'auto', cursor: 'pointer' }} onClick={() => router.push('/')} />
+        <img src="/logo.png" alt="DueMate" style={{ height: '120px', width: 'auto', cursor: 'pointer' }} onClick={() => router.push('/')} />
         <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
           <a href="#how-it-works" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>How It Works</a>
           <a href="#pricing" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Pricing</a>

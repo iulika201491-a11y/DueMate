@@ -532,36 +532,13 @@ export default function Dashboard() {
     <div style={{ background: '#f9fafb', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#1f2937' }}>
       {/* Navigation */}
             {/* Navigation */}
-      <nav style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => router.push('/')}>
-          <img src="/logo.png" alt="DueMate" style={{ height: '32px', width: 'auto' }} />
-          <span style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>DueMate</span>
-        </div>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <Link href="/guide" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>
-            How It Works
-          </Link>
-          <Link href="/pricing" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>
-            Pricing
-          </Link>
-          <button
-            onClick={() => router.push('/auth')}
-            style={{
-              background: '#3b82f6',
-              color: 'white',
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 600,
-            }}
-          >
-            Sign In
-          </button>
-        </div>
-      </nav>
-
+    <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', position: 'sticky', top: 0, zIndex: 100 }}>
+  <img src="/logo.png" alt="DueMate" style={{ height: '120px', width: 'auto', cursor: 'pointer' }} onClick={() => router.push('/')} />
+  <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
+    <Link href="/dashboard" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Dashboard</Link>
+    <button onClick={() => supabase.auth.signOut().then(() => router.push('/'))} style={{ background: '#ef4444', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>Sign Out</button>
+  </div>
+</nav>
       {/* Trial Banner */}
       {subscription?.status === 'trial' && (
         <div style={{ background: '#dbeafe', borderBottom: '1px solid #bfdbfe', padding: '16px 40px', textAlign: 'center' }}>
