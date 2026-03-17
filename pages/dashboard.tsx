@@ -46,6 +46,14 @@ interface CashFlowForecast {
   accuracy: string;
 }
 
+interface ExtractedInvoiceData {
+  invoiceNumber: string;
+  amount: number;
+  dueDate: string;
+  clientName: string;
+  clientEmail: string;
+}
+
 const paymentTermsTemplates = [
   {
     id: 'net-7',
@@ -110,6 +118,10 @@ export default function Dashboard() {
   const [cashFlowForecast, setCashFlowForecast] = useState<CashFlowForecast | null>(null);
   const [lateFeeCalculator, setLateFeeCalculator] = useState({ amount: '', daysLate: '' });
   const [lateFeeResult, setLateFeeResult] = useState<{ fee: number; total: number } | null>(null);
+  const [extractedData, setExtractedData] = useState<ExtractedInvoiceData | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [extractError, setExtractError] = useState('');
+  const [selectedClientForPlus, setSelectedClientForPlus] = useState<string>('');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -181,6 +193,125 @@ export default function Dashboard() {
     }
   };
 
+  const isFreeTrialUser = !subscription || (subscription?.status === 'trial');
+  const clientCount = clients.length;
+  const invoiceCount = invoices.length;
+  const canAddMoreClients = !isFreeTrialUser || clientCount < 3;
+  const canAddMoreInvoices = !isFreeTrialUser || invoiceCount < 6;
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!canAddMoreInvoices) {
+      setExtractError('Free trial limit reached (6 invoices max)');
+      return;
+    }
+
+    setUploading(true);
+    setExtractError('');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/extractInvoice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Failed to process file');
+
+      const data = await response.json();
+      setExtractedData({
+        invoiceNumber: '',
+        amount: 0,
+        dueDate: '',
+        clientName: '',
+        clientEmail: '',
+      });
+      setMessage({ type: 'success', text: 'File uploaded. Please fill in the invoice details below.' });
+    } catch (error: any) {
+      setExtractError('File uploaded. Please fill in the invoice details below.');
+      setExtractedData({
+        invoiceNumber: '',
+        amount: 0,
+        dueDate: '',
+        clientName: '',
+        clientEmail: '',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const confirmExtractedInvoice = async () => {
+    if (!extractedData || !user) return;
+
+    if (!extractedData.invoiceNumber || !extractedData.amount || !extractedData.dueDate || !extractedData.clientName || !extractedData.clientEmail) {
+      setMessage({ type: 'error', text: 'Please fill in all fields' });
+      return;
+    }
+
+    setLoadingAction(true);
+    try {
+      // Find or create client
+      let clientId = clients.find((c) => c.email === extractedData.clientEmail)?.id;
+
+      if (!clientId) {
+        const { data: newClient } = await supabase
+          .from('clients')
+          .insert({
+            user_id: user.id,
+            name: extractedData.clientName,
+            email: extractedData.clientEmail,
+          })
+          .select()
+          .single();
+        clientId = newClient?.id;
+      }
+
+      // Create invoice
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert({
+          user_id: user.id,
+          client_id: clientId,
+          invoice_number: extractedData.invoiceNumber,
+          amount: extractedData.amount,
+          due_date: extractedData.dueDate,
+          status: 'pending',
+        })
+        .select();
+
+      if (invoiceError) throw invoiceError;
+
+      // Schedule automated reminders (day 3 and day 7)
+      if (invoiceData && invoiceData.length > 0) {
+        const invoiceId = invoiceData[0].id;
+        await fetch('/api/schedule-reminders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            invoiceId: invoiceId,
+            clientId: clientId,
+            dueDate: extractedData.dueDate,
+          }),
+        });
+      }
+
+      setExtractedData(null);
+      setMessage({ type: 'success', text: 'Invoice created! Automated reminders scheduled for day 3 & 7.' });
+      await fetchData(user.id);
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
   const addClient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newClient.name || !newClient.email) {
@@ -188,9 +319,8 @@ export default function Dashboard() {
       return;
     }
 
-    // Check free trial limit
-    if (subscription?.status === 'trial' && !editingClient && clients.length >= 2) {
-      setMessage({ type: 'error', text: 'Free trial limited to 2 clients. Upgrade to add more.' });
+    if (subscription?.status === 'trial' && !editingClient && clients.length >= 3) {
+      setMessage({ type: 'error', text: 'Free trial limited to 3 clients. Upgrade to add more.' });
       return;
     }
 
@@ -257,9 +387,8 @@ export default function Dashboard() {
       return;
     }
 
-    // Check free trial limit
-    if (subscription?.status === 'trial' && invoices.length >= 3) {
-      setMessage({ type: 'error', text: 'Free trial limited to 3 invoices. Upgrade to add more.' });
+    if (subscription?.status === 'trial' && invoices.length >= 6) {
+      setMessage({ type: 'error', text: 'Free trial limited to 6 invoices. Upgrade to add more.' });
       return;
     }
 
@@ -460,6 +589,32 @@ export default function Dashboard() {
     return texts[riskLevel] || 'Unknown';
   };
 
+  const togglePlusAccess = async (clientId: string) => {
+    if (!isFreeTrialUser) return;
+    
+    try {
+      await supabase
+        .from('clients')
+        .update({ has_plus_access: true })
+        .eq('id', clientId)
+        .eq('user_id', user.id);
+
+      // Reset other clients' Plus access
+      await supabase
+        .from('clients')
+        .update({ has_plus_access: false })
+        .eq('user_id', user.id)
+        .neq('id', clientId);
+
+      await fetchData(user.id);
+      setSelectedClientForPlus(clientId);
+      setMessage({ type: 'success', text: 'Plus features assigned to this client!' });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    } catch (error) {
+      console.error('Error toggling Plus access:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -479,7 +634,6 @@ export default function Dashboard() {
   });
   const latePayments = invoices.filter((i) => i.status === 'paid_late').length;
 
-  // Get top 5 clients by reliability (for prominent display)
   const topClientsByReliability = Object.entries(clientScores)
     .sort(([, a], [, b]) => b.payment_reliability_score - a.payment_reliability_score)
     .slice(0, 5)
@@ -517,7 +671,7 @@ export default function Dashboard() {
       {subscription?.status === 'trial' && (
         <div style={{ background: '#dbeafe', borderBottom: '1px solid #bfdbfe', padding: '16px 40px', textAlign: 'center' }}>
           <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#1e40af', fontWeight: 600 }}>
-            🎉 You're on a free 7-day trial (limited to 2 clients, 3 invoices). Upgrade to Pro ($12/mo) or Plus ($29/mo) for unlimited access.
+            🎉 You're on a free 7-day trial (limited to 3 clients, 6 invoices). Upgrade to Pro ($12/mo) or Plus ($29/mo) for unlimited access.
           </p>
           <button onClick={() => router.push('/pricing')} style={{ background: '#1e40af', color: 'white', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
             Upgrade Now
@@ -854,18 +1008,131 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Invoices Tab */}
+        {/* Invoices Tab - WITH PDF UPLOAD */}
         {activeTab === 'invoices' && (
           <div>
-            <button
-              onClick={() => setShowNewInvoice(!showNewInvoice)}
-              style={{ background: '#3b82f6', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, marginBottom: '20px' }}
-            >
-              + New Invoice
-            </button>
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+              <button
+                onClick={() => setShowNewInvoice(!showNewInvoice)}
+                style={{ background: '#3b82f6', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
+              >
+                + New Invoice
+              </button>
+            </div>
 
+            {/* PDF Upload Section */}
+            {!extractedData && (
+              <div style={{ background: 'white', borderRadius: '8px', border: '2px dashed #d1d5db', padding: '40px', textAlign: 'center', marginBottom: '20px' }}>
+                <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px' }}>📄 Upload Invoice PDF</div>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileUpload}
+                  disabled={uploading || !canAddMoreInvoices}
+                  style={{
+                    padding: '10px',
+                    cursor: uploading || !canAddMoreInvoices ? 'not-allowed' : 'pointer',
+                    opacity: uploading || !canAddMoreInvoices ? 0.5 : 1,
+                  }}
+                />
+                {uploading && <p style={{ color: '#6b7280', marginTop: '12px' }}>Processing file...</p>}
+                {extractError && <p style={{ color: '#ef4444', marginTop: '12px' }}>{extractError}</p>}
+                {!canAddMoreInvoices && <p style={{ color: '#ef4444', marginTop: '12px' }}>Free trial limit reached (6 invoices max)</p>}
+              </div>
+            )}
+
+            {/* Extracted Invoice Form */}
+            {extractedData && (
+              <div style={{ background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px', marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, marginTop: 0, marginBottom: '20px' }}>Confirm Invoice Details</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>Invoice Number</label>
+                    <input
+                      type="text"
+                      value={extractedData.invoiceNumber}
+                      onChange={(e) => setExtractedData({ ...extractedData, invoiceNumber: e.target.value })}
+                      style={{ width: '100%', padding: '10px', marginTop: '6px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>Amount</label>
+                    <input
+                      type="number"
+                      value={extractedData.amount}
+                      onChange={(e) => setExtractedData({ ...extractedData, amount: parseFloat(e.target.value) })}
+                      style={{ width: '100%', padding: '10px', marginTop: '6px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>Due Date</label>
+                    <input
+                      type="date"
+                      value={extractedData.dueDate}
+                      onChange={(e) => setExtractedData({ ...extractedData, dueDate: e.target.value })}
+                      style={{ width: '100%', padding: '10px', marginTop: '6px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>Client Name</label>
+                    <input
+                      type="text"
+                      value={extractedData.clientName}
+                      onChange={(e) => setExtractedData({ ...extractedData, clientName: e.target.value })}
+                      style={{ width: '100%', padding: '10px', marginTop: '6px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>Client Email</label>
+                    <input
+                      type="email"
+                      value={extractedData.clientEmail}
+                      onChange={(e) => setExtractedData({ ...extractedData, clientEmail: e.target.value })}
+                      style={{ width: '100%', padding: '10px', marginTop: '6px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={confirmExtractedInvoice}
+                    disabled={loadingAction}
+                    style={{
+                      background: '#10b981',
+                      color: 'white',
+                      padding: '10px 20px',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: loadingAction ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      opacity: loadingAction ? 0.6 : 1,
+                    }}
+                  >
+                    Save Invoice
+                  </button>
+                  <button
+                    onClick={() => setExtractedData(null)}
+                    style={{
+                      background: '#6b7280',
+                      color: 'white',
+                      padding: '10px 20px',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Manual Invoice Form */}
             {showNewInvoice && (
               <form onSubmit={addInvoice} style={{ background: 'white', padding: '24px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, marginTop: 0, marginBottom: '20px' }}>Create New Invoice</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                   <select
                     value={newInvoice.client_id}
@@ -906,6 +1173,7 @@ export default function Dashboard() {
               </form>
             )}
 
+            {/* Invoices List */}
             <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
               {invoices.length === 0 ? (
                 <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>No invoices yet.</div>
@@ -976,6 +1244,36 @@ export default function Dashboard() {
                   )}
                 </div>
               </form>
+            )}
+
+            {/* Plus Access Assignment (Free Trial Only) */}
+            {isFreeTrialUser && (
+              <div style={{ background: '#e0f2fe', border: '1px solid #7dd3fc', borderRadius: '8px', padding: '16px', marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 12px 0', color: '#0369a1' }}>🎁 Try Plus Features Free</h4>
+                <p style={{ fontSize: '13px', color: '#0c4a6e', margin: '0 0 12px 0' }}>Assign Plus plan features (cash flow forecasting, advanced analytics) to one client to test before upgrading.</p>
+                {clients.map((client) => (
+                  <button
+                    key={client.id}
+                    onClick={() => togglePlusAccess(client.id)}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '10px 12px',
+                      marginBottom: '8px',
+                      background: client.id === selectedClientForPlus ? '#06b6d4' : '#f0f9ff',
+                      color: client.id === selectedClientForPlus ? 'white' : '#0369a1',
+                      border: '1px solid ' + (client.id === selectedClientForPlus ? '#06b6d4' : '#7dd3fc'),
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {client.id === selectedClientForPlus ? '✓ ' : '○ '} {client.name}
+                  </button>
+                ))}
+              </div>
             )}
 
             <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
