@@ -34,13 +34,10 @@ export default function Home() {
     <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1f2937' }}>
       {/* Navigation */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <img src="/logo.png" alt="DueMate" style={{ height: '32px', width: 'auto' }} />
-          <span style={{ fontSize: '24px', fontWeight: 800, color: '#1f2937' }}>DueMate</span>
-        </div>
+        <img src="/logo.png" alt="DueMate" style={{ height: '80px', width: 'auto', cursor: 'pointer' }} onClick={() => router.push('/')} />
         <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-          <Link href="#how-it-works" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>How It Works</Link>
-          <Link href="#pricing" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Pricing</Link>
+          <a href="#how-it-works" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>How It Works</a>
+          <a href="#pricing" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Pricing</a>
           {user ? (
             <button onClick={() => router.push('/dashboard')} style={{ background: '#3b82f6', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>Dashboard</button>
           ) : (
@@ -82,7 +79,6 @@ export default function Home() {
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h3 style={{ fontSize: '36px', fontWeight: 800, textAlign: 'center', marginBottom: '50px' }}>See DueMate in Action</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-            {/* Feature 1 */}
             <div style={{ background: '#f9fafb', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
               <div style={{ background: '#f3f4f6', padding: '20px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#6b7280' }}>Track All Invoices</div>
               <div style={{ padding: '40px 20px', height: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -94,7 +90,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Feature 2 */}
             <div style={{ background: '#f9fafb', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
               <div style={{ background: '#f3f4f6', padding: '20px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#6b7280' }}>Automated Reminders</div>
               <div style={{ padding: '40px 20px', height: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -106,7 +101,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Feature 3 */}
             <div style={{ background: '#f9fafb', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
               <div style={{ background: '#f3f4f6', padding: '20px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#6b7280' }}>Client Reliability</div>
               <div style={{ padding: '40px 20px', height: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -165,7 +159,6 @@ export default function Home() {
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h3 style={{ fontSize: '36px', fontWeight: 800, textAlign: 'center', marginBottom: '50px' }}>Simple, Transparent Pricing</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px', marginBottom: '60px' }}>
-            {/* Free Trial */}
             <div style={{ padding: '32px', background: '#f9fafb', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
               <h4 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 8px 0' }}>Free Trial</h4>
               <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 24px 0' }}>Perfect to get started</p>
@@ -181,7 +174,6 @@ export default function Home() {
               <button onClick={handleStartFreeTrial} style={{ width: '100%', background: '#3b82f6', color: 'white', padding: '12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>Start Free Trial</button>
             </div>
 
-            {/* Pro */}
             <div style={{ padding: '32px', background: 'white', borderRadius: '12px', border: '2px solid #667eea', position: 'relative' }}>
               <div style={{ position: 'absolute', top: '-12px', left: '16px', background: '#667eea', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>MOST POPULAR</div>
               <h4 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 8px 0' }}>Pro</h4>
@@ -199,7 +191,6 @@ export default function Home() {
               <button onClick={handleStartFreeTrial} style={{ width: '100%', background: '#667eea', color: 'white', padding: '12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>Start Free Trial</button>
             </div>
 
-            {/* Plus */}
             <div style={{ padding: '32px', background: '#f9fafb', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
               <h4 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 8px 0' }}>Plus</h4>
               <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 24px 0' }}>For agencies & teams</p>
