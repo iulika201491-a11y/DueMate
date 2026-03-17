@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 
 interface Client {
@@ -7,6 +8,7 @@ interface Client {
   name: string;
   email: string;
   created_at: string;
+  has_plus_access?: boolean;
 }
 
 interface Invoice {
@@ -110,7 +112,6 @@ export default function Dashboard() {
   const [cashFlowForecast, setCashFlowForecast] = useState<CashFlowForecast | null>(null);
   const [lateFeeCalculator, setLateFeeCalculator] = useState({ amount: '', daysLate: '' });
   const [lateFeeResult, setLateFeeResult] = useState<{ fee: number; total: number } | null>(null);
-  const [selectedClientForPlus, setSelectedClientForPlus] = useState<string>('');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -256,6 +257,34 @@ export default function Dashboard() {
     setShowNewClient(false);
   };
 
+  const togglePlusAccess = async (clientId: string, currentStatus: boolean) => {
+    setLoadingAction(true);
+    try {
+      if (!currentStatus) {
+        await supabase
+          .from('clients')
+          .update({ has_plus_access: false })
+          .eq('user_id', user.id);
+      }
+      await supabase
+        .from('clients')
+        .update({ has_plus_access: !currentStatus })
+        .eq('id', clientId);
+
+      setClients(
+        clients.map(c =>
+          c.id === clientId ? { ...c, has_plus_access: !currentStatus } : { ...c, has_plus_access: false }
+        )
+      );
+      setMessage({ type: 'success', text: 'Plus access updated!' });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
   const addInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newInvoice.client_id || !newInvoice.invoice_number || !newInvoice.amount || !newInvoice.due_date) {
@@ -286,7 +315,6 @@ export default function Dashboard() {
 
       if (invoiceError) throw invoiceError;
 
-      // Schedule automated reminders (day 3 and day 7)
       if (invoiceData && invoiceData.length > 0) {
         const invoiceId = invoiceData[0].id;
         await fetch('/api/schedule-reminders', {
@@ -465,32 +493,6 @@ export default function Dashboard() {
     return texts[riskLevel] || 'Unknown';
   };
 
-  const togglePlusAccess = async (clientId: string) => {
-    if (!isFreeTrialUser) return;
-
-    try {
-      await supabase
-        .from('clients')
-        .update({ has_plus_access: true })
-        .eq('id', clientId)
-        .eq('user_id', user.id);
-
-      // Reset other clients' Plus access
-      await supabase
-        .from('clients')
-        .update({ has_plus_access: false })
-        .eq('user_id', user.id)
-        .neq('id', clientId);
-
-      await fetchData(user.id);
-      setSelectedClientForPlus(clientId);
-      setMessage({ type: 'success', text: 'Plus features assigned to this client!' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-    } catch (error) {
-      console.error('Error toggling Plus access:', error);
-    }
-  };
-
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -531,7 +533,7 @@ export default function Dashboard() {
     <div style={{ background: '#f9fafb', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#1f2937' }}>
       {/* Navigation */}
       <nav style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '20px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 700, margin: 0 }}>DueMate</h1>
+        <img src="/logo.png" alt="DueMate" style={{ height: '120px', width: 'auto', cursor: 'pointer' }} onClick={() => router.push('/')} />
         <button
           onClick={async () => {
             await supabase.auth.signOut();
@@ -547,7 +549,7 @@ export default function Dashboard() {
       {subscription?.status === 'trial' && (
         <div style={{ background: '#dbeafe', borderBottom: '1px solid #bfdbfe', padding: '16px 40px', textAlign: 'center' }}>
           <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#1e40af', fontWeight: 600 }}>
-            🎉 You're on a free 7-day trial (limited to 3 clients, 6 invoices). Upgrade to Pro ($12/mo) or Plus ($29/mo) for unlimited access.
+            🎉 You're on a free 7-day trial (limited to 3 clients, 2 invoices per client). Upgrade to Pro ($12/mo) or Plus ($29/mo) for unlimited access.
           </p>
           <button onClick={() => router.push('/pricing')} style={{ background: '#1e40af', color: 'white', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
             Upgrade Now
@@ -1011,32 +1013,32 @@ export default function Dashboard() {
             )}
 
             {/* Plus Access Assignment (Free Trial Only) */}
-            {isFreeTrialUser && (
-              <div style={{ background: '#e0f2fe', border: '1px solid #7dd3fc', borderRadius: '8px', padding: '16px', marginBottom: '20px' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 12px 0', color: '#0369a1' }}>🎁 Try Plus Features Free</h4>
-                <p style={{ fontSize: '13px', color: '#0c4a6e', margin: '0 0 12px 0' }}>Assign Plus plan features (cash flow forecasting, advanced analytics) to one client to test before upgrading.</p>
-                {clients.map((client) => (
-                  <button
-                    key={client.id}
-                    onClick={() => togglePlusAccess(client.id)}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      textAlign: 'left',
-                      padding: '10px 12px',
-                      marginBottom: '8px',
-                      background: client.id === selectedClientForPlus ? '#06b6d4' : '#f0f9ff',
-                      color: client.id === selectedClientForPlus ? 'white' : '#0369a1',
-                      border: '1px solid ' + (client.id === selectedClientForPlus ? '#06b6d4' : '#7dd3fc'),
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {client.id === selectedClientForPlus ? '✓ ' : '○ '} {client.name}
-                  </button>
-                ))}
+            {isFreeTrialUser && clients.length > 0 && (
+              <div style={{ background: '#fef3c7', border: '2px solid #f59e0b', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 12px 0', color: '#92400e' }}>⭐ Try Plus Features Free</h4>
+                <p style={{ fontSize: '13px', color: '#b45309', margin: '0 0 16px 0' }}>Assign Plus plan features (cash flow forecasting, advanced analytics) to one client to test before upgrading.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                  {clients.map((client) => (
+                    <button
+                      key={client.id}
+                      onClick={() => togglePlusAccess(client.id, client.has_plus_access || false)}
+                      disabled={loadingAction}
+                      style={{
+                        padding: '10px 16px',
+                        background: client.has_plus_access ? '#10b981' : 'white',
+                        color: client.has_plus_access ? 'white' : '#1f2937',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        cursor: loadingAction ? 'not-allowed' : 'pointer',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        opacity: loadingAction ? 0.6 : 1,
+                      }}
+                    >
+                      {client.name} {client.has_plus_access ? '✓' : ''}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -1053,7 +1055,12 @@ export default function Dashboard() {
                     return (
                       <div key={client.id} style={{ padding: '16px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '15px', fontWeight: 600, color: '#1f2937' }}>{client.name}</div>
+                          <div style={{ fontSize: '15px', fontWeight: 600, color: '#1f2937' }}>
+                            {client.name}
+                            {client.has_plus_access && (
+                              <span style={{ background: '#667eea', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, marginLeft: '8px' }}>Plus Access ✓</span>
+                            )}
+                          </div>
                           <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px', marginBottom: '8px' }}>
                             {client.email} • {clientInvoices.length} invoices
                           </div>
